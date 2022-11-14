@@ -1,0 +1,20 @@
+#Shared Variables
+library(tidyverse)
+library(scales)
+library("raster")
+library("rhdf5")
+library("neonUtilities")
+library("devtools")
+library("geoNEON")
+#library(inborutils)
+options(stringsAsFactors=FALSE)
+NEON_siteNames <- c("ABBY","BARR","BART","BLAN","BONA","CLBJ","CPER","DCFS","DEJU","DELA","DSNY","GRSM","GUAN","HARV",
+                    "HEAL","JERC","JORN","KONA","KONZ","LAJA","LENO","MLBS","MOAB","NIWO","NOGP","OAES","ONAQ",
+                    "ORNL","OSBS","PUUM","RMNP","SCBI","SERC","SJER","SOAP","SRER","STEI","STER","TALL","TEAK",
+                    "TOOL","TREE","UKFS","UNDE","WOOD","WREF","YELL")
+length_NEON_siteNames <- length(NEON_siteNames)
+fungalRootDat <- read.csv('Data/fungalRootAssociations.csv',header=TRUE)
+mycorrhizeTypes <- unique(fungalRootDat$Mycorrhizal.type)
+dataPath <- "/Users/Kathryn/Documents/Postdoc_Research/phenologyAndMycorrhizae/Data/"
+phenoCam_metadata_file <- "Phenology_NEON_Field_Site_Metadata_20210928.csv"
+
