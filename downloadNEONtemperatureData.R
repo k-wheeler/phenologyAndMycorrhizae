@@ -8,7 +8,7 @@ for(s in seq_along(NEON_siteNames)[37:47]){
 }
 
 allTempData <- matrix(nrow=0,ncol=4)
-for(s in seq_along(NEON_siteNames)[2:47]){
+for(s in seq_along(NEON_siteNames)){
   print(NEON_siteNames[s])
   #dir.create(paste0(dataPath,'NEON_TemperatureData/',NEON_siteNames[s]))
   #stackByTable(paste0(dataPath,"/NEON_TemperatureData/",NEON_siteNames[s]),folder=T)

@@ -6,6 +6,7 @@ library("rhdf5")
 library("neonUtilities")
 library("devtools")
 library("geoNEON")
+
 #library(inborutils)
 options(stringsAsFactors=FALSE)
 NEON_siteNames <- c("ABBY","BARR","BART","BLAN","BONA","CLBJ","CPER","DCFS","DEJU","DELA","DSNY","GRSM","GUAN","HARV",
@@ -16,5 +17,7 @@ length_NEON_siteNames <- length(NEON_siteNames)
 fungalRootDat <- read.csv('Data/fungalRootAssociations.csv',header=TRUE)
 mycorrhizeTypes <- unique(fungalRootDat$Mycorrhizal.type)
 dataPath <- "/Users/Kathryn/Documents/Postdoc_Research/phenologyAndMycorrhizae/Data/"
-phenoCam_metadata_file <- "Phenology_NEON_Field_Site_Metadata_20210928.csv"
+
+siteData <- read_csv(paste0(dataPath,'NEON_Field_Site_Metadata_20220412.csv'))
+siteData <- siteData %>% filter(field_site_type%in%c("Gradient Terrestrial","Core Terrestrial"))
 
