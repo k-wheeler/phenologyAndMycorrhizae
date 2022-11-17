@@ -6,6 +6,7 @@ library("rhdf5")
 library("neonUtilities")
 library("devtools")
 library("geoNEON")
+library(daymetr)
 
 #library(inborutils)
 options(stringsAsFactors=FALSE)
