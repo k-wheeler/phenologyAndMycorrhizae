@@ -1,7 +1,13 @@
 source('sharedVariables.R')
-source('downloadPhenoCam.R')
-source('calculatePhenoCamUncertainty.R')
 options(stringsAsFactors = FALSE)
+
+valid_url <- function(url_in,t=2){
+  con <- url(url_in)
+  check <- suppressWarnings(try(open.connection(con,open="rt",timeout=t),silent=T)[1])
+  suppressWarnings(try(close.connection(con),silent=T))
+  ifelse(is.null(check),TRUE,FALSE)
+}
+
 
 siteData$topPhenocam <- sapply(strsplit(siteData$field_phenocams,"[()]"),`[`,2)
 siteData$bottomPhenocam <- sapply(strsplit(siteData$field_phenocams,"[()]"),`[`,4)

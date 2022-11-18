@@ -44,15 +44,16 @@ for(s in seq_along(NEON_siteNames)){
     filter(finalQF==0 | is.na(finalQF))
   
   verticalHeights <- unique(subDat$verticalPosition)
-  for(h in seq_along(verticalHeights)){
-    subSubDat <- subDat %>% filter(verticalPosition==verticalHeights[h]) %>%
-      mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
-      group_by(date) %>% mutate(dailyMeanTemp=mean(tempSingleMean))
-    subSubDat <- data.frame(subSubDat)
-    subSubDat <-subSubDat[,which(names(subSubDat) %in% c('siteID','date','dailyMeanTemp'))] %>% distinct()
-    subSubDat$verticalPosition <- verticalHeights[h]
-    allDailyMeanTemp <- rbind(allDailyMeanTemp,subSubDat)
-  }
+  print(verticalHeights)
+  # for(h in seq_along(verticalHeights)){
+  #   subSubDat <- subDat %>% filter(verticalPosition==verticalHeights[h]) %>%
+  #     mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
+  #     group_by(date) %>% mutate(dailyMeanTemp=mean(tempSingleMean))
+  #   subSubDat <- data.frame(subSubDat)
+  #   subSubDat <-subSubDat[,which(names(subSubDat) %in% c('siteID','date','dailyMeanTemp'))] %>% distinct()
+  #   subSubDat$verticalPosition <- verticalHeights[h]
+  #   allDailyMeanTemp <- rbind(allDailyMeanTemp,subSubDat)
+  # }
 }
 
 subDat <- allDailyMeanTemp %>% filter(siteID=="HARV") %>% filter(verticalPosition==10)
