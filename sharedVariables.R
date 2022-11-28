@@ -6,6 +6,7 @@ library("rhdf5")
 library("neonUtilities")
 library("devtools")
 library("geoNEON")
+library('suncalc')
 library(daymetr)
 
 #library(inborutils)
@@ -21,4 +22,6 @@ dataPath <- "/Users/Kathryn/Documents/Postdoc_Research/phenologyAndMycorrhizae/D
 
 siteData <- read_csv(paste0(dataPath,'NEON_Field_Site_Metadata_20220412.csv'))
 siteData <- siteData %>% filter(field_site_type%in%c("Gradient Terrestrial","Core Terrestrial"))
+
+NEON_phenophase_names <- c("Young leaves","Breaking leaf buds","Colored leaves","Increasing leaf size","Leaves","Falling leaves","Young needles","Breaking needle buds","Initial growth","Emerging needles","Colored needles","Needles","Falling needles")
 

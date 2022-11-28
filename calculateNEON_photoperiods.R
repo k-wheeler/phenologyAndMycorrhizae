@@ -1,7 +1,7 @@
 source('sharedVariables.R')
 library('suncalc')
 
-dates <- seq(as.Date("2016-01-01"),as.Date("2021-12-31"),by="day")
+dates <- seq(as.Date("2014-01-01"),as.Date("2021-12-31"),by="day")
 
 allSunlightTimes <- matrix(nrow=(nrow(siteData)*length(dates)),ncol=7)
 allSunlightTimes <- data.frame(allSunlightTimes)
@@ -31,4 +31,7 @@ for(s in 1:nrow(siteData)){
     ct <- ct + 1
   }
 }
+allSunlightTimes[(is.na(allSunlightTimes$daylength) & (lubridate::month(allSunlightTimes$date)%in%c(11,12,1))),'daylength'] <- 0 #Northern Latitudes Winter Darkness
+
+allSunlightTimes[(is.na(allSunlightTimes$daylength) & (lubridate::month(allSunlightTimes$date)%in%c(5,6,7,8))),'daylength'] <- 24 #Northern Latitudes Summer Sunlight
 write.csv(allSunlightTimes,file=paste0(dataPath,'NEON_sunlightTimes.csv'),row.names=FALSE,quote=FALSE)

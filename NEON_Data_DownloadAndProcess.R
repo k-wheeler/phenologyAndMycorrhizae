@@ -68,3 +68,60 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funType){
   write.csv(file=paste0(dataPath,outFileName),allDaily,row.names = FALSE,quote=FALSE)
   
 }
+
+gapFillFromDaymet <- function(dataName,dataPath,varName){
+  allData <- read.csv(paste0(dataPath,dataName,'Dailydata.csv'))
+  allOutput <- matrix(nrow=0,ncol=3)
+  # pdf('dayMetVsTripleTemp.pdf',height=9,width=9)
+  # par(mfrow=c(3,3))
+  for(s in seq_along(NEON_siteNames)){
+    siteName <- NEON_siteNames[s]
+    print(siteName)
+    lat <- siteData$field_latitude[siteData$field_site_id==siteName]
+    lon <- siteData$field_longitude[siteData$field_site_id==siteName]
+    
+    subDat <- allData %>% filter(siteID==siteName)
+    subDat$date <- as.Date(subDat$date)
+    
+    dayMet <- download_daymet(site=siteName,
+                              lat=lat,
+                              lon=lon,
+                              start=2014,
+                              end=2021,
+                              internal=TRUE,
+                              simplify=TRUE)
+    dayMet$date <- as.Date((dayMet$yday-1),origin=as.Date(paste0(dayMet$year,"-01-01")))
+    if(varName=='tempTripleMean'){
+      subDat$NEON_value <- subDat$tempTripleMean
+      dayMetMax <- dayMet %>% filter(measurement=="tmax..deg.c.")
+      dayMetMax <- dayMetMax %>% dplyr::select(value,date)
+      
+      dayMetMin <- dayMet %>% filter(measurement=="tmin..deg.c.")
+      dayMetMin <- dayMetMin %>% dplyr::select(value,date)
+      dayMet <- merge(dayMetMax,dayMetMin,by="date")
+      dayMet$gapFillValue <- rowMeans(dayMet[,2:3])
+    }else if(varName=="precipBulk"){
+      subDat$NEON_value <- subDat$precipBulk
+      dayMet <- dayMet %>% filter(measurement=="prcp..mm.day.")
+      dayMet$gapFillValue <- dayMet$value
+    }
+    subDatAll <- merge(dayMet,subDat,by='date',all=TRUE)
+    subDatAll$siteID <- siteName
+    mdl <- lm(NEON_value~gapFillValue,data = subDatAll)
+    # sm <- summary(mdl)
+    # plot(subDatAll$dayMetTemp,subDatAll$tempTripleMean,pch=20,main=siteName,
+    #      ylab="NEON Top of Tower Temperature",xlab="Daymet Temperature")
+    # abline(1,1,col="red",lwd=3)
+    # abline(lm(tempTripleMean~dayMetTemp,data = subDatAll),col="cyan",lwd=3)
+    # text((min(subDatAll$dayMetTemp,na.rm=TRUE)+10),(max(subDatAll$tempTripleMean,na.rm=TRUE)-10),round(sm$r.squared,digits=3))
+    # 
+    subDatAll$NEON_value[is.na(subDatAll$NEON_value)] <- predict(mdl,subDatAll[is.na(subDatAll$NEON_value),])
+    subDatAll <- subDatAll[,c('date','siteID','NEON_value')]
+    colnames(subDatAll)[colnames(subDatAll)=="NEON_value"] <- varName
+    
+    #plot(subDatAll$date,subDatAll$NEON_value,pch=20)
+    allOutput <- rbind(allOutput,subDatAll)
+  }
+  # dev.off()
+  write.csv(file=paste0(dataPath,dataName,'Dailydata_gapFilled.csv'),allOutput,row.names = FALSE,quote=FALSE)
+}
