@@ -1,0 +1,261 @@
+---
+title: "Data Exploratory Analyses/Plots"
+author: "Kathryn Wheeler"
+date: "11/30/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+source('sharedVariables.R')
+source('NEON_Data_DownloadAndProcess.R')
+```
+
+```{r}
+library(MuMIn)
+library(ggplot2)
+library(mgcv)
+library(ggridges)
+
+allPrecipData <- read.csv(paste0(dataPath,"NEON_PrecipitationDataDailydata_gapFilled.csv"))
+allPrecipData$year <- lubridate::year(allPrecipData$date)
+allPrecipData <- allPrecipData %>% group_by(year,siteID) %>% mutate(cumPrecip=cumsum(precipBulk)) #Calculates the cummulative sum of precip for each site-year for each date
+
+allTempData <- read.csv(paste0(dataPath,"NEON_TemperatureDataDailydata_gapFilled.csv"))
+allTempData$year <- lubridate::year(allTempData$date)
+
+allTempData$GDDoffset_0 <- ifelse((allTempData$tempTripleMean-0)<0,0,allTempData$tempTripleMean-0)
+allTempData <- allTempData %>% group_by(year,siteID) %>% mutate(GDD_0=cumsum(GDDoffset_0))
+
+allTempData$GDDoffset_5 <- ifelse((allTempData$tempTripleMean-5)<0,0,allTempData$tempTripleMean-5)
+allTempData <- allTempData %>% group_by(year,siteID) %>% mutate(GDD_5=cumsum(GDDoffset_5))
+
+allTempData$GDDoffset_10 <- ifelse((allTempData$tempTripleMean-10)<0,0,allTempData$tempTripleMean-10)
+allTempData <- allTempData %>% group_by(year,siteID) %>% mutate(GDD_10=cumsum(GDDoffset_10))
+
+allTempData$GDDoffset_15 <- ifelse((allTempData$tempTripleMean-15)<0,0,allTempData$tempTripleMean-15)
+allTempData <- allTempData %>% group_by(year,siteID) %>% mutate(GDD_15=cumsum(GDDoffset_15))
+
+allTempData <- allTempData[,-c(5,7,9,11)] #Remove the offset columns to just keep cummulative 
+
+allSunlightTimes <- read.csv(paste0(dataPath,'NEON_sunlightTimes.csv'))[-c(3,4,5,6)]
+```
+
+```{r}
+p <- 2 #Bud burst 
+  print(NEON_phenophase_names[p])
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  subDat$year <- as.numeric(subDat$year)
+  subDat <- left_join(subDat,allPrecipData[,-3],by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allTempData,by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allSunlightTimes,by=c('siteID','date'))
+  subDat <- subDat %>% filter(year!=2022)
+  subDat$Mycorrhizal.type <- as.factor(subDat$Mycorrhizal.type)
+  
+  #Deciduous Broadleaf
+  subDatDB <- subDat %>% filter(growthForm=="Deciduous broadleaf")
+  subDatDB_ECM <- subDatDB %>% filter(Mycorrhizal.type=="EcM",growthForm=="Deciduous broadleaf")
+  subDatDB_AM <- subDatDB %>% filter(Mycorrhizal.type=="AM",growthForm=="Deciduous broadleaf")
+  
+  plot(density(subDatDB_AM$dayOfYear),main="Day of Year of Budburst for DB")
+  lines(density(subDatDB_ECM$dayOfYear),col="red")
+  legend('topleft',col=c("black","red"),legend = c("AM DB","ECM DB"),lty=1)
+  
+  ggplot(subDatDB,aes(as.numeric(as.character(dayOfYear)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Day of Year")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("Day of Year of Bud Burst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,200))
+  
+    ggplot(subDatDB,aes(as.numeric(as.character(dayOfYear)),Genus,fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Day of Year")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("Day of Year of Bud Burst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,200))
+    
+    output <- matrix(ncol=length(unique(subDatDB$Genus)),nrow=length_NEON_siteNames)
+    for(s in seq_along(NEON_siteNames)){
+      print(NEON_siteNames[s])
+      for(j in seq_along(unique(subDatDB$Genus))){
+        output[s,j] <- nrow(subDatDB %>% 
+                              filter(Genus==(unique(subDatDB$Genus)[j]),siteID==NEON_siteNames[s]))
+      }
+    }
+    speciesPerSite <- data.frame(output)
+    colnames(speciesPerSite) <- unique(subDatDB$Genus)
+    speciesPerSite <- cbind(NEON_siteNames,speciesPerSite)
+    
+    MTperSite <- data.frame(matrix(ncol=6,nrow=length_NEON_siteNames))
+    colnames(MTperSite) <- c("siteID","Total_AM_ind","Total_ECM_ind","Total_AM_gen","Total_ECM_gen","Lat")
+    MTperSite$siteID <- NEON_siteNames
+    for(s in seq_along(NEON_siteNames)){
+      print(NEON_siteNames[s])
+      siteDat <- subDatDB %>% filter(siteID==NEON_siteNames[s])
+      MTperSite$Total_AM_ind[s] <- sum(siteDat$Mycorrhizal.type=="AM")
+      MTperSite$Total_ECM_ind[s] <- sum(siteDat$Mycorrhizal.type=="EcM")
+      MTperSite$Total_AM_gen[s] <- length(unique((siteDat %>% filter(Mycorrhizal.type=="AM"))$Genus))
+      MTperSite$Total_ECM_gen[s] <- length(unique((siteDat %>% filter(Mycorrhizal.type=="EcM"))$Genus))
+      MTperSite$Lat[s] <- as.numeric(siteData[siteData$field_site_id==NEON_siteNames[s],'field_latitude'])
+    }
+    MTperSite <- MTperSite[order(MTperSite$Lat,decreasing = TRUE),]
+    
+    mdl_gam <- gam(dayOfYear ~ s(decimalLatitude,k=25) + Mycorrhizal.type,data=subDatDB,
+                   method="REML",
+                   na.action="na.fail")
+    plot.gam(mdl_gam,residuals=TRUE,pch=20,cex=5,shade=TRUE,page=1,all.terms = TRUE)
+      gam.check(mdl_gam,page=1)
+    plot(subDatDB$decimalLatitude,subDatDB$dayOfYear,pch=20,xlab="Latitude",ylab="Day Of Year of Budburst")
+    abline(lm(dayOfYear ~ decimalLatitude,data=subDatDB),lwd=3)
+    abline(lm(dayOfYear ~ decimalLatitude,data=subDatDB[subDatDB$Mycorrhizal.type=="AM",]),lwd=3,col="cyan")
+    abline(lm(dayOfYear ~ decimalLatitude,data=subDatDB[subDatDB$Mycorrhizal.type=="EcM",]),lwd=3,col="red")
+    legend('bottomright',col=c("black","cyan","red"),legend = c("All DB","AM DB","ECM DB"),lty=1,lwd=3)
+    
+  concurvity(mdl_gam,full=TRUE)
+  
+  ggplot(subDatDB,aes(as.numeric(as.character(GDD_10)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("GDD_10 (C)")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("GDD_10 of Bud Burst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,600))
+      
+      ggplot(subDatDB,aes(as.numeric(as.character(GDD_10)),as.numeric(as.character(dayOfYear)),col=Mycorrhizal.type))+geom_point(cex=.1)+
+        facet_wrap(~siteID,ncol=6)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("GDD_10 (C)")+
+  ylab("Day of Year of Budburst")+
+        geom_smooth(method="lm")+ 
+  scale_x_continuous(limits=c(0,1500))
+      
+  gdd_doy_slopes <- data.frame(matrix(nrow=length_NEON_siteNames,ncol=3))
+  colnames(gdd_doy_slopes) <- c("siteID","AM_slope","ECM_slope")
+  gdd_doy_slopes$siteID <- NEON_siteNames
+  for(s in seq_along(NEON_siteNames)){
+      print(NEON_siteNames[s])
+      siteDat <- subDatDB %>% filter(siteID==NEON_siteNames[s])
+      if(sum(siteDat$Mycorrhizal.type=="AM")>1){
+      gdd_doy_slopes$AM_slope[s] <- summary(lm(dayOfYear~GDD_10,
+                                               data=siteDat[siteDat$Mycorrhizal.type=="AM",]))$coefficients[2,1]
+      }
+      if(sum(siteDat$Mycorrhizal.type=="EcM")>3){
+      gdd_doy_slopes$ECM_slope[s] <- summary(lm(dayOfYear~GDD_10,
+                                               data=siteDat[siteDat$Mycorrhizal.type=="EcM",]))$coefficients[2,1]
+      }
+  }
+  plot(density(na.omit(gdd_doy_slopes$AM_slope)),col="cyan",main="Slopes of Site-Specific Linear Regressions Between GDD_10 and DOY of Bud Burst")
+  lines(density(na.omit(gdd_doy_slopes$ECM_slope)),col="red")
+  legend('topright',col=c("cyan","red"),legend = c("AM DB","ECM DB"),lty=1,lwd=3)
+  
+  dl_doy_slopes <- data.frame(matrix(nrow=length_NEON_siteNames,ncol=3))
+  colnames(dl_doy_slopes) <- c("siteID","AM_slope","ECM_slope")
+  dl_doy_slopes$siteID <- NEON_siteNames
+  for(s in seq_along(NEON_siteNames)){
+      print(NEON_siteNames[s])
+      siteDat <- subDatDB %>% filter(siteID==NEON_siteNames[s])
+      if(sum(siteDat$Mycorrhizal.type=="AM")>1){
+      dl_doy_slopes$AM_slope[s] <- summary(lm(dayOfYear~daylength,
+                                               data=siteDat[siteDat$Mycorrhizal.type=="AM",]))$coefficients[2,1]
+      }
+      if(sum(siteDat$Mycorrhizal.type=="EcM")>3){
+      dl_doy_slopes$ECM_slope[s] <- summary(lm(dayOfYear~daylength,
+                                               data=siteDat[siteDat$Mycorrhizal.type=="EcM",]))$coefficients[2,1]
+      }
+  }
+  plot(density(na.omit(dl_doy_slopes$AM_slope)),col="cyan",main="Slopes of Site-Specific Linear Regressions Between Day length and DOY of Bud Burst")
+  lines(density(na.omit(dl_doy_slopes$ECM_slope)),col="red")
+  legend('topright',col=c("cyan","red"),legend = c("AM DB","ECM DB"),lty=1,lwd=3)
+  
+  mdl_gam <- gam(dayOfYear ~ s(daylength, by=as.factor(siteID)) + Mycorrhizal.type,data=subDatDB,
+                 method="REML",
+                 na.action="na.fail")
+    plot.gam(mdl_gam,residuals=TRUE,pch=20,cex=5,shade=TRUE,page=1,all.terms = TRUE)
+    gam.check(mdl_gam)
+    
+    plot(subDatDB$daylength,subDatDB$dayOfYear,pch=20)
+    points(subDatDB[subDatDB$Mycorrhizal.type=="EcM",'daylength'],
+           subDatDB[subDatDB$Mycorrhizal.type=="EcM",'dayOfYear'],pch=20,col="red")
+    
+    points(subDatDB[subDatDB$Mycorrhizal.type=="AM",'daylength'],
+           subDatDB[subDatDB$Mycorrhizal.type=="AM",'dayOfYear'],pch=20,col="cyan")
+    
+    indCts <- subDatDB %>% count(individualID)
+    indCts <- left_join(indCts,subDatDB[,c('siteID',"individualID")])
+    
+    ggplot(indCts,aes(x=n))+
+      geom_histogram(binwidth = 1)+
+      facet_wrap(~siteID,ncol=4)+
+      xlab("Number of Repeated Measurements Per Individual")+
+  theme_classic()
+    
+    subDatDB2 <- subDatDB %>% group_by(individualID) %>% mutate(doy_sd=sd(dayOfYear,na.rm=TRUE))
+    subDatDB2 <- subDatDB2[,c('siteID','individualID','doy_sd','decimalLatitude','Mycorrhizal.type')] %>% unique()
+    
+    ggplot(subDatDB2,aes(as.numeric(as.character(doy_sd)),
+                         fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Day of Year SD")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("SD in Day Of Year of Budburst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,30))
+    
+    
+    plot(density(na.omit(subDatDB2$doy_sd)),main="SD in DOY of bud burst for DB individuals",xlim=c(0,40))
+    lines(density(na.omit(as.numeric(subDatDB2[subDatDB2$Mycorrhizal.type=="AM",]$doy_sd))),col="cyan")
+    lines(density(na.omit(as.numeric(subDatDB2[subDatDB2$Mycorrhizal.type=="EcM",]$doy_sd))),col="red")
+    legend('topright',col=c("black","cyan","red"),legend = c("All DB","AM DB","ECM DB"),lty=1,lwd=3)
+    
+    
+```
+
+```{r}
+p <- 3 #Senescence
+  print(NEON_phenophase_names[p])
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  subDat$year <- as.numeric(subDat$year)
+  subDat <- left_join(subDat,allPrecipData[,-3],by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allTempData,by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allSunlightTimes,by=c('siteID','date'))
+  subDat <- subDat %>% filter(year!=2022)
+  subDat$Mycorrhizal.type <- as.factor(subDat$Mycorrhizal.type)
+  
+  #Deciduous Broadleaf
+  subDatDB <- subDat %>% filter(growthForm=="Deciduous broadleaf")
+  subDatDB_ECM <- subDatDB %>% filter(Mycorrhizal.type=="EcM",growthForm=="Deciduous broadleaf")
+  subDatDB_AM <- subDatDB %>% filter(Mycorrhizal.type=="AM",growthForm=="Deciduous broadleaf")
+  
+    ggplot(subDatDB,aes(as.numeric(as.character(dayOfYear)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Day of Year")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("Day of Year of Senescence in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(150,400))
+    
+  ggplot(subDatDB,aes(as.numeric(as.character(GDD_15)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("GDD_15 (C)")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("GDD_10 of Senescence in Deciduous Broadleaf")
+
+```
+
+
