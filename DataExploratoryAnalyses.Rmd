@@ -9,12 +9,12 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 ```
 
-```{r}
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 library(MuMIn)
 library(ggplot2)
 library(mgcv)
@@ -44,7 +44,117 @@ allTempData <- allTempData[,-c(5,7,9,11)] #Remove the offset columns to just kee
 allSunlightTimes <- read.csv(paste0(dataPath,'NEON_sunlightTimes.csv'))[-c(3,4,5,6)]
 ```
 
+#For each site-PFT combination: How many individuals of the different associations are present? 
+
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=15}
+#Number of Individuals of AM and EcM that are present
+uniqueIndividuals <- matrix(nrow=0,ncol=5)
+for(p in seq_along(NEON_phenophase_names)){
+  #Bud burst 
+  print(NEON_phenophase_names[p])
+
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat[,c('siteID','individualID','growthForm','Mycorrhizal.type','decimalLatitude')]
+  subDat <- subDat %>% unique()
+  uniqueIndividuals <- rbind(uniqueIndividuals,subDat)
+  uniqueIndividuals <- uniqueIndividuals %>% unique()
+}
+uniqueIndividuals <- uniqueIndividuals[!(uniqueIndividuals$siteID%in%c("2019","2020","2021","2017","2018","2022")),]
+#uniqueIndividuals <- uniqueIndividuals %>% filter(Mycorrhizal.type %in% c("AM","EcM"))
+uniqueIndividuals <- uniqueIndividuals %>% filter(!is.na(growthForm))
+uniqueIndividuals[uniqueIndividuals$growthForm=="Pine",'growthForm'] <- "Evergreen conifer"
+uniqueIndividuals <- uniqueIndividuals %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf")) #Exclude the others 
+
+uniqueIndividuals2 <- uniqueIndividuals %>% group_by(siteID,Mycorrhizal.type,growthForm,decimalLatitude) %>% summarise(n=n())
+
+ggplot(uniqueIndividuals2,aes(fill=Mycorrhizal.type,y=n,x=fct_reorder(siteID,decimalLatitude))) + 
+  geom_bar(position="dodge",stat="identity")+
+  facet_wrap(~growthForm,ncol=4)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Site ID (Ordered by Latitude)")+
+  ylab("Number of Individuals")+
+  coord_flip()
+
+```
+
+
+What I learned is that DB has the best variation between different mycorrhizal associations so that's where I should focus my comparitive studies and then do across PFTs for the overall. 
+
+#For each site-phenophase combination: how many years are individuals re-measured?
+```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=8,fig.height=10}
+for(p in seq_along(NEON_phenophase_names)){
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','year')]
+  subDat <- subDat %>% unique()
+  
+  subDat2 <- subDat %>% group_by(siteID,Mycorrhizal.type,individualID,decimalLatitude) %>% summarise(n=n())
+  if(nrow(subDat2)>2){
+    print(ggplot(subDat2,aes(n,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+            geom_density_ridges2(scale=1)+
+            theme_classic()+
+            theme(axis.text.x = element_text(angle=90))+
+            xlab("Number Of Years Per Individual")+
+            ylab("Site ID (Ordered by Latitude)")+
+            ggtitle(NEON_phenophase_names[p])+
+            scale_x_continuous(limits=c(0,8)))
+  }
+}
+
+```
+
+
+#For each PFT-phenophase combination: Does the Standard Deviation in DOYs and lengths between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
+
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
+for(p in seq_along(NEON_phenophase_names)){
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  subDat <- subDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm')]
+  subDat <- subDat %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Forb","Graminoid"))
+  subDat2 <- subDat %>% group_by(individualID) %>% mutate(doy_sd=sd(dayOfYear,na.rm=TRUE))
+  
+  if(nrow(subDat2)>2){
+    print(ggplot(subDat2,aes(doy_sd,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+            geom_density_ridges2(scale=1)+
+            theme_bw()+
+            theme(axis.text.x = element_text(angle=90))+
+            xlab("SD in DOY Per Individual")+
+            ylab("Site ID (Ordered by Latitude)")+
+            facet_wrap(~growthForm)+
+            ggtitle(NEON_phenophase_names[p])+
+            scale_x_continuous(limits=c(0,100)))
+  }
+}
+
+#Lengths Between Phenophases:
+
+  
+```
+
+
+#For each PFT-phenophase combination: Does the DOY of the timing and the lengths between phenophases differ between EcM and AM assocated plants across all sites and within each site?
+
 ```{r}
+
+
+
+```
+
+#For each individual and phenophase, what predictors seem to be the most important?
+
+```{r}
+
+```
+
+#Do the basic GAMs work for any of the phenophase and PFTs?
+
+```{r}
+
+```
+
+
+```{r,eval=FALSE}
 p <- 2 #Bud burst 
   print(NEON_phenophase_names[p])
   subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
@@ -191,14 +301,7 @@ p <- 2 #Bud burst
     points(subDatDB[subDatDB$Mycorrhizal.type=="AM",'daylength'],
            subDatDB[subDatDB$Mycorrhizal.type=="AM",'dayOfYear'],pch=20,col="cyan")
     
-    indCts <- subDatDB %>% count(individualID)
-    indCts <- left_join(indCts,subDatDB[,c('siteID',"individualID")])
-    
-    ggplot(indCts,aes(x=n))+
-      geom_histogram(binwidth = 1)+
-      facet_wrap(~siteID,ncol=4)+
-      xlab("Number of Repeated Measurements Per Individual")+
-  theme_classic()
+
     
     subDatDB2 <- subDatDB %>% group_by(individualID) %>% mutate(doy_sd=sd(dayOfYear,na.rm=TRUE))
     subDatDB2 <- subDatDB2[,c('siteID','individualID','doy_sd','decimalLatitude','Mycorrhizal.type')] %>% unique()
@@ -222,7 +325,7 @@ p <- 2 #Bud burst
     
 ```
 
-```{r}
+```{r,eval=FALSE}
 p <- 3 #Senescence
   print(NEON_phenophase_names[p])
   subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
