@@ -41,6 +41,11 @@ combineNEONdata_PhenoObs <- function(saveType=""){
       subDat <- allPhenoObsDat %>% filter(phenophaseName==NEON_phenophase_names[p],phenophaseStatus=="yes",phenophaseIntensity!="") %>% group_by(individualID,phenophaseIntensity,year) %>% slice(1:1)
       write.csv(subDat,file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'),row.names=FALSE,quote=FALSE)
     }
+  }else if(saveType=="allOfPhenophase"){
+    p <- 5 #Just done for the Leaves phenophase
+    print(NEON_phenophase_names[p])
+    subDat <- allPhenoObsDat %>% filter(phenophaseName==NEON_phenophase_names[p],phenophaseStatus=="yes",phenophaseIntensity!="")
+    write.csv(subDat,file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllIntensities_',gsub(" ","",NEON_phenophase_names[p]),'.csv'),row.names=FALSE,quote=FALSE)
   }
 
 }

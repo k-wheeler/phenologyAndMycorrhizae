@@ -73,6 +73,7 @@ NEON_ID='DP1.10055.001'
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
 combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
+combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
 ```
 
 #Calculate Cummulative Weather for Each Individual phenophase intensity pair

@@ -12,14 +12,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
-```
-
-```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 library(MuMIn)
 library(ggplot2)
 library(mgcv)
 library(ggridges)
+```
 
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 allPrecipData <- read.csv(paste0(dataPath,"NEON_PrecipitationDataDailydata_gapFilled.csv"))
 allPrecipData$year <- lubridate::year(allPrecipData$date)
 allPrecipData <- allPrecipData %>% group_by(year,siteID) %>% mutate(cumPrecip=cumsum(precipBulk)) #Calculates the cummulative sum of precip for each site-year for each date
@@ -81,7 +80,43 @@ ggplot(uniqueIndividuals2,aes(fill=Mycorrhizal.type,y=n,x=fct_reorder(siteID,dec
 
 What I learned is that DB has the best variation between different mycorrhizal associations so that's where I should focus my comparitive studies and then do across PFTs for the overall. 
 
-#For each site-phenophase combination: how many years are individuals re-measured?
+#For each phenophase, what growth forms (PFT) are measured?
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+allDat <- matrix(nrow=0,ncol=6)
+for(p in seq_along(NEON_phenophase_names)){
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat[,c('siteID','individualID','growthForm','decimalLatitude','year','phenophaseName')]
+  subDat <- subDat %>% unique() %>% filter(!is.na(growthForm))
+  allDat <- rbind(allDat,subDat)
+}
+  allDat <- allDat %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf"))
+  
+  growthFormTotal <- allDat %>% group_by(growthForm) %>% summarise(growthFormTotal=n())
+  allDat <- left_join(allDat,growthFormTotal,by="growthForm")
+    
+  allDat2 <- allDat %>% group_by(phenophaseName,growthForm,growthFormTotal) %>% summarise(n=(n()))
+  # ggplot(allDat2,aes(n,phenophaseName,fill=growthForm)) +
+  #           geom_bar(position="dodge",stat="identity")+
+  #           scale_fill_brewer(palette="Accent")+
+  #           theme_classic()+
+  #           theme(axis.text.x = element_text(angle=90))+
+  #           xlab("Number Of Total Measurements (Ratio of Total Per Growth Form")+
+  #           ylab("Phenophase")+
+  #           ggtitle(NEON_phenophase_names[p])
+  
+    ggplot(allDat2,aes((n/growthFormTotal),growthForm,fill=phenophaseName)) +
+            geom_bar(position="dodge",stat="identity")+
+            scale_fill_brewer(palette="Set3")+
+            theme_classic()+
+            theme(axis.text.x = element_text(angle=90))+
+            xlab("Number Of Total Measurements (Ratio of Total Per Growth Form)")+
+            ylab("Growth Form")+
+            ggtitle("Which Phenophases are Monitored for with Growth Forms")
+
+```
+
+
+#For each site-phenophase combination: how many years are individuals re-measured by mycorrhizae type?
 ```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=8,fig.height=10}
 for(p in seq_along(NEON_phenophase_names)){
   subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
@@ -104,7 +139,7 @@ for(p in seq_along(NEON_phenophase_names)){
 ```
 
 
-#For each PFT-phenophase combination: Does the Standard Deviation in DOYs and lengths between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
+#For each PFT-phenophase combination: Does the timing and Standard Deviation in DOYs differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
 
 ```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
 for(p in seq_along(NEON_phenophase_names)){
@@ -126,17 +161,69 @@ for(p in seq_along(NEON_phenophase_names)){
             scale_x_continuous(limits=c(0,100)))
   }
 }
-
-#Lengths Between Phenophases:
-
   
 ```
 
+#For each PFT-phenophase combination: Does the length and Standard Deviation differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
 
-#For each PFT-phenophase combination: Does the DOY of the timing and the lengths between phenophases differ between EcM and AM assocated plants across all sites and within each site?
+##There are various definitions of growing season length depending on PFT:
+*Semi-evergreen broadleaf: budburst-colored; leaves (varying intensities); Young-leaves-colored
+*Graminoid: leaves (varying intensities)
+*Forb: leaves (varying intensities); Young-leaves-colored
+*Evergreen conifer: No lengths
+*Evergreen broadleaf: No lengths
+*Drought deciduous broadleaf: leaves (varying intensities); young leaves-colored leaves
+*Deciduous broadleaf: leaves (varying intensities); budburst-colored 
 
-```{r}
+##Different definitions of growing season length:
+*Budburst-colored: semi-evergreen broadleaf; deciduous broadleaf
+*Leaf presence: semi-evergreen broadleaf; graminoid; forb; drought deciduous broadleaf; deciduous broadleaf
+*Young-leaves-colored:semi-evergreen broadleaf; forb; drought-deciduous broadleaf
 
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
+for(initialP in c(1,2)){
+  p=initialP
+  budBurstDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  budBurstDat <- budBurstDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  
+  budBurstDat <- budBurstDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm','year','date')] %>% mutate(winterYear=as.numeric(year),year=as.numeric(year))
+  
+  p=3
+  coloredLeavesDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  coloredLeavesDat <- coloredLeavesDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  
+  coloredLeavesDat <- coloredLeavesDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm','year','date')]%>% mutate(winterYear=(year+1),year=as.numeric(year))
+  
+  winterLengthDat <- inner_join(coloredLeavesDat,budBurstDat,
+                            by=c("winterYear","individualID",'siteID',"Mycorrhizal.type","decimalLatitude",
+                                     "growthForm")) %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf"))%>% 
+    mutate(winterLength=as.Date(date.y)-as.Date(date.x)) %>%
+    group_by(individualID) %>% mutate(winter_sd=sd(winterLength,na.rm=TRUE)) %>%
+    ungroup() %>%
+    dplyr::select(individualID,winter_sd,siteID,Mycorrhizal.type,decimalLatitude,growthForm) %>% unique()
+  
+  summerLengthDat <- inner_join(coloredLeavesDat,budBurstDat,
+                                by=c("year","individualID",'siteID',"Mycorrhizal.type",
+                                     "decimalLatitude","growthForm")) %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf")) %>%
+    mutate(summerLength=as.Date(date.x)-as.Date(date.y)) %>%
+    group_by(individualID) %>% mutate(summer_sd=sd(summerLength,na.rm=TRUE))%>%
+    ungroup() %>%
+    dplyr::select(individualID,summer_sd,siteID,Mycorrhizal.type,decimalLatitude,growthForm) %>% unique()
+  
+  print(ggplot(winterLengthDat,
+         aes(winter_sd,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+    geom_density_ridges2(scale=1)+
+    theme_bw()+
+    theme(axis.text.x = element_text(angle=90))+
+    xlab("SD")+
+    ylab("Site ID (Ordered by Latitude)")+
+    facet_wrap(~growthForm)+
+    ggtitle(paste("SD in Winter Length Per Individual: Colored-",NEON_phenophase_names[initialP]))+
+    scale_x_continuous(limits=c(0,100)))
+}
+# #Based on Leaf Numbers
+# leavesDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+# initialGrowth <- leavesDat %>% filter(phenophaseIntensity=="5-")
 
 
 ```
@@ -144,6 +231,7 @@ for(p in seq_along(NEON_phenophase_names)){
 #For each individual and phenophase, what predictors seem to be the most important?
 
 ```{r}
+p=5
 
 ```
 
