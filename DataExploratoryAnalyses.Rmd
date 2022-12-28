@@ -18,6 +18,7 @@ library(mgcv)
 library(ggridges)
 ```
 
+#Load Covariate Data
 ```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 allPrecipData <- read.csv(paste0(dataPath,"NEON_PrecipitationDataDailydata_gapFilled.csv"))
 allPrecipData$year <- lubridate::year(allPrecipData$date)
@@ -115,6 +116,7 @@ for(p in seq_along(NEON_phenophase_names)){
 
 ```
 
+What I learned: Measured phenophases differ a lot by PFT. Evergreen don't have an end of growing season measurement. Many just have leaves as their changing phenophase. 
 
 #For each site-phenophase combination: how many years are individuals re-measured by mycorrhizae type?
 ```{r,echo=FALSE,message=FALSE,warning=FALSE,fig.width=8,fig.height=10}
@@ -138,8 +140,36 @@ for(p in seq_along(NEON_phenophase_names)){
 
 ```
 
+What I learned: There aren't large sample sizes per individual and the sample sizes range between 1 and 8. 
 
-#For each PFT-phenophase combination: Does the timing and Standard Deviation in DOYs differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
+#For each PFT-phenophase combination: Does the timing in DOYs differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
+
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
+for(p in seq_along(NEON_phenophase_names)){
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  subDat <- subDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm')]
+  subDat <- subDat %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Forb","Graminoid"))
+  
+  if(nrow(subDat)>2){
+    print(ggplot(subDat,aes(dayOfYear,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+            geom_density_ridges2(scale=1)+
+            theme_bw()+
+            theme(axis.text.x = element_text(angle=90))+
+            xlab("DOY")+
+            ylab("Site ID (Ordered by Latitude)")+
+            facet_wrap(~growthForm)+
+            ggtitle(NEON_phenophase_names[p]))
+          #+
+           # scale_x_continuous(limits=c(0,100)))
+  }
+}
+  
+```
+
+What I learned: For most sites, AM budburst earlier and senescened earlier than ECM
+
+#For each PFT-phenophase combination: Does the Standard Deviation in DOYs differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
 
 ```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
 for(p in seq_along(NEON_phenophase_names)){
@@ -164,7 +194,11 @@ for(p in seq_along(NEON_phenophase_names)){
   
 ```
 
-#For each PFT-phenophase combination: Does the length and Standard Deviation differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
+What I learned: EcM seem maybe have less sd in timing in budburst. SD in Colored leaves doesn't seem to differ as much between mycorrhizae types. 
+
+New question: Do they break buds earlier when corrected for site or latitude effects? 
+
+#For each PFT-phenophase combination: Does the length of winter and summer differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
 
 ##There are various definitions of growing season length depending on PFT:
 *Semi-evergreen broadleaf: budburst-colored; leaves (varying intensities); Young-leaves-colored
@@ -179,6 +213,105 @@ for(p in seq_along(NEON_phenophase_names)){
 *Budburst-colored: semi-evergreen broadleaf; deciduous broadleaf
 *Leaf presence: semi-evergreen broadleaf; graminoid; forb; drought deciduous broadleaf; deciduous broadleaf
 *Young-leaves-colored:semi-evergreen broadleaf; forb; drought-deciduous broadleaf
+
+```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
+for(initialP in c(1,2)){
+  p=initialP
+  budBurstDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  budBurstDat <- budBurstDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  
+  budBurstDat <- budBurstDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm','year','date')] %>% mutate(winterYear=as.numeric(year),year=as.numeric(year))
+  
+  p=3
+  coloredLeavesDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  coloredLeavesDat <- coloredLeavesDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+  
+  coloredLeavesDat <- coloredLeavesDat[,c('siteID','individualID','Mycorrhizal.type','decimalLatitude','dayOfYear','growthForm','year','date')]%>% mutate(winterYear=(year+1),year=as.numeric(year))
+  
+  winterLengthDat <- inner_join(coloredLeavesDat,budBurstDat,
+                            by=c("winterYear","individualID",'siteID',"Mycorrhizal.type","decimalLatitude",
+                                     "growthForm")) %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf"))%>% 
+    mutate(winterLength=as.Date(date.y)-as.Date(date.x))
+  
+  summerLengthDat <- inner_join(coloredLeavesDat,budBurstDat,
+                                by=c("year","individualID",'siteID',"Mycorrhizal.type",
+                                     "decimalLatitude","growthForm")) %>% filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf")) %>%
+    mutate(summerLength=as.Date(date.x)-as.Date(date.y))
+  
+  print(ggplot(winterLengthDat,
+         aes(winterLength,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+    geom_density_ridges2(scale=1)+
+    theme_bw()+
+    theme(axis.text.x = element_text(angle=90))+
+    xlab("Winter Length (days)")+
+    ylab("Site ID (Ordered by Latitude)")+
+    facet_wrap(~growthForm)+
+    ggtitle(paste("Winter Length Per Individual: Colored-",NEON_phenophase_names[initialP])))
+  
+    print(ggplot(summerLengthDat,
+         aes(summerLength,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+    geom_density_ridges2(scale=1)+
+    theme_bw()+
+    theme(axis.text.x = element_text(angle=90))+
+    xlab("Summer Length (days)")+
+    ylab("Site ID (Ordered by Latitude)")+
+    facet_wrap(~growthForm)+
+    ggtitle(paste("Summer Length Per Individual: Colored-",NEON_phenophase_names[initialP])))
+  
+}
+# #Based on Leaf Numbers
+# leavesPhenophases <- determinePhenophaseTimingForLeaves(dataPath) %>% 
+#   filter(growthForm %in% c("Deciduous broadleaf","Drought deciduous broadleaf","Evergreen broadleaf","Evergreen conifer","Forb","Graminoid","Semi-evergreen broadleaf")) 
+# 
+# greenupDat <- leavesPhenophases %>% dplyr::select(-c(greendownDate,greendownDOY)) %>%
+#   mutate(winterYear=(year),year=as.numeric(year))
+# greendownDat <- leavesPhenophases %>% dplyr::select(-c(greenupDate,greenupDOY)) %>%
+#   mutate(winterYear=(year+1),year=as.numeric(year))
+# 
+# winterLengthDat <- inner_join(greendownDat,greenupDat,
+#                                 by=c("winterYear","individualID",'siteID',"Mycorrhizal.type",
+#                                      "decimalLatitude","growthForm")) %>%
+#   mutate(winterLength=as.Date(greenupDate)-as.Date(greendownDate)) %>%
+#     group_by(individualID) %>% mutate(winter_sd=sd(winterLength,na.rm=TRUE)) %>%
+#     ungroup() %>%
+#     dplyr::select(individualID,winter_sd,siteID,Mycorrhizal.type,decimalLatitude,growthForm) %>% unique()
+#   
+#   summerLengthDat <- inner_join(greendownDat,greenupDat,
+#                                 by=c("year","individualID",'siteID',"Mycorrhizal.type",
+#                                      "decimalLatitude","growthForm")) %>%
+#   mutate(summerLength=as.Date(greendownDate)-as.Date(greenupDate)) %>%
+#     group_by(individualID) %>% mutate(summer_sd=sd(summerLength,na.rm=TRUE)) %>%
+#     ungroup() %>%
+#     dplyr::select(individualID,summer_sd,siteID,Mycorrhizal.type,decimalLatitude,growthForm) %>% unique()
+#   
+#   ggplot(winterLengthDat,
+#          aes(winter_sd,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+#     geom_density_ridges2(scale=1)+
+#     theme_bw()+
+#     theme(axis.text.x = element_text(angle=90))+
+#     xlab("SD")+
+#     ylab("Site ID (Ordered by Latitude)")+
+#     facet_wrap(~growthForm)+
+#     ggtitle(paste("SD in Winter Length Per Individual: Number of Leaves"))+
+#     scale_x_continuous(limits=c(0,50))
+#   
+#     ggplot(summerLengthDat,
+#          aes(summer_sd,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+#     geom_density_ridges2(scale=1)+
+#     theme_bw()+
+#     theme(axis.text.x = element_text(angle=90))+
+#     xlab("SD")+
+#     ylab("Site ID (Ordered by Latitude)")+
+#     facet_wrap(~growthForm)+
+#     ggtitle(paste("SD in Summer Length Per Individual: Number of Leaves"))+
+#     scale_x_continuous(limits=c(0,50))
+#   
+
+```
+
+What I learned: EcM maybe has a slightly shorter winter and AM maybe has a slightly shorter summer. 
+
+#For each PFT-phenophase combination: Does the SD of winter and summer lengths differ between phenophases differ between EcM and AM associated plants acrross all sites and within each site?
 
 ```{r,echo=FALSE,results='hide',message=FALSE,warning=FALSE,fig.width=10,fig.height=20}
 for(initialP in c(1,2)){
@@ -220,13 +353,22 @@ for(initialP in c(1,2)){
     facet_wrap(~growthForm)+
     ggtitle(paste("SD in Winter Length Per Individual: Colored-",NEON_phenophase_names[initialP]))+
     scale_x_continuous(limits=c(0,100)))
+  
+    print(ggplot(summerLengthDat,
+         aes(summer_sd,fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+    geom_density_ridges2(scale=1)+
+    theme_bw()+
+    theme(axis.text.x = element_text(angle=90))+
+    xlab("SD")+
+    ylab("Site ID (Ordered by Latitude)")+
+    facet_wrap(~growthForm)+
+    ggtitle(paste("SD in Summer Length Per Individual: Colored-",NEON_phenophase_names[initialP]))+
+    scale_x_continuous(limits=c(0,100)))
 }
-# #Based on Leaf Numbers
-# leavesDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
-# initialGrowth <- leavesDat %>% filter(phenophaseIntensity=="5-")
-
 
 ```
+
+What I learned: The standard deviations in winter and summer lengths don't really seem to differ between EcM and AM. 
 
 #For each individual and phenophase, what predictors seem to be the most important?
 
@@ -238,7 +380,80 @@ p=5
 #Do the basic GAMs work for any of the phenophase and PFTs?
 
 ```{r}
+p <- 2 #Bud burst 
+  print(NEON_phenophase_names[p])
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],
+                              growthForm=="Deciduous broadleaf")
+  subDat$year <- as.numeric(subDat$year)
+  
+  allIndividuals <- unique(subDat$individualID)
+  subDat <- subDat %>% dplyr::select(siteID,date,dayOfYear,individualID,canopyPosition,
+                           height,growthForm,Mycorrhizal.type,year)
 
+  allOutput <- matrix(nrow=0,ncol=10)
+  colnames(allOutput) <- c('siteID','date','dayOfYear','individualID',
+                           'canopyPosition','height','growthForm',
+                           'Mycorrhizal.type','year','phenophaseOccurred')
+  for(i in seq_along(allIndividuals)){
+    if(i %% 100==0){
+      print(i)
+    }
+    subSubDat <- subDat %>% filter(individualID==allIndividuals[i])
+    for(j in 1:nrow(subSubDat)){
+      currentRow <- subSubDat[j,]
+      newOutput <- currentRow %>% slice(rep(1:n(), each = (subSubDat$dayOfYear[j]-1)))
+      newOutput <- as.data.frame(newOutput)
+      newOutput$date <- seq((as.Date(currentRow$date)-currentRow$dayOfYear+1),
+                            (as.Date(currentRow$date)-1),by="day")
+      newOutput$dayOfYear <- as.integer(row.names(newOutput))
+      newOutput$phenophaseOccurred <- FALSE
+      currentRow$phenophaseOccurred <- TRUE
+      newOutput <- rbind(newOutput,currentRow)
+      newOutput <- newOutput[(max((nrow(newOutput)-29),0)):nrow(newOutput),]
+
+      allOutput <- rbind(allOutput,newOutput)
+    }
+    
+  }
+  OGallOutput <- allOutput
+  allOutput$date <- as.character(as.Date(allOutput$date))
+  allOutput <- left_join(allOutput,allPrecipData[,-3],by=c('siteID','date','year'))
+  allOutput <- left_join(allOutput,allTempData,by=c('siteID','date','year'))
+  allOutput <- left_join(allOutput,allSunlightTimes,by=c('siteID','date'))
+  allOutput <- allOutput %>% filter(year!=2022)
+  allOutput$Mycorrhizal.type <- as.factor(allOutput$Mycorrhizal.type)
+  
+  #Deciduous Broadleaf
+  subDatDB <- allOutput %>% filter(growthForm=="Deciduous broadleaf",canopyPosition %in% c("Mostly shaded","Partially shaded","Full sun","Full shade"))
+  
+  # mdl_gam1 <- gam(dayOfYear ~ s(GDD_15,k=10) + s(GDD_5,k=10) + s(GDD_0,k=10) + s(GDD_10,k=10),data=subDatDB,
+  #                  method="REML",
+  #                  na.action="na.fail")
+  
+  mdl_gam <- gam(phenophaseOccurred ~ s(GDD_10) + s(daylength),data=subDatDB,
+                   method="REML",
+                   na.action="na.fail")
+  
+  mdl <- lm <- lm(phenophaseOccurred ~ (GDD_10) + (daylength),data=subDatDB)
+  #######********Editing here: How to get it to predict a categorical response variable?****
+  
+  gam.check(mdl_gam,page=1)
+  plot.gam(mdl_gam,residuals=TRUE,pch=20,cex=5,shade=TRUE,page=1,all.terms = TRUE)
+  gam.check(mdl_gam1,page=1)
+  
+  plot(subDatDB$daylength,subDatDB$dayOfYear,pch=20)
+  plot(subDatDB$GDD_5,subDatDB$dayOfYear,pch=20)
+  plot(subDatDB$cumPrecip,subDatDB$dayOfYear,pch=20)
+  
+  mdl_gam2 <- gam(dayOfYear ~ s(daylength,by=Mycorrhizal.type) + s(GDD_10,by=Mycorrhizal.type) + s(cumPrecip,by=Mycorrhizal.type) + ,data=subDatDB,
+                   method="REML",
+                   na.action="na.fail")
+  
+    plot.gam(mdl_gam,residuals=TRUE,pch=20,cex=5,shade=TRUE,page=1,all.terms = TRUE)
+      gam.check(mdl_gam1,page=1)
+  
+  
 ```
 
 
