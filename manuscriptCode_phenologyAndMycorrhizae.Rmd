@@ -76,9 +76,17 @@ combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
 combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
 ```
 
-#Calculate Cummulative Weather for Each Individual phenophase intensity pair
+#Download NEON Soil Microbe Data
 ```{r}
+dataName="NEON_SoilMicrobeComposition"
+NEON_ID='DP1.10081.001'
+selectColumns <-
+inFileName <- c("mcc_soilSeqVariantMetadata_16S.csv","mcc_soilSeqVariantMetadata_ITS.csv")
+varName <- 
 
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #Note: I had to modify this function to remove the indices for sites that didn't seem to have data. 
+combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath)
 ```
 
 

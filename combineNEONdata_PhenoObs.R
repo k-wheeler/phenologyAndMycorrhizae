@@ -50,6 +50,29 @@ combineNEONdata_PhenoObs <- function(saveType=""){
 
 }
 
+determinePhenophaseTimingForLeaves <- function(dataPath){
+  p <- 5
+  phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllIntensities_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  lowIntDat <- phenoDat %>% filter(phenophaseIntensity == "5-24%") %>% dplyr::select(-c(phenophaseIntensity,phenophaseStatus,phenophaseIntensityDefinition))
+  greenUpDat <- lowIntDat %>% group_by(individualID,year) %>% slice(1:1) %>% rename(greenupDate=date,greenupDOY=dayOfYear)
+  
+  highIntDat <- phenoDat %>% filter(phenophaseIntensity == "75-94%") %>% 
+    dplyr::select(-c(phenophaseIntensity,phenophaseStatus,phenophaseIntensityDefinition)) %>% 
+    group_by(individualID,year) %>% slice(1:1)
+  
+  greenDownDat <- full_join(lowIntDat,highIntDat,by=c('siteID','plotID','individualID','decimalLatitude',
+                                                      'decimalLongitude','elevation','scientificName','growthForm','Genus','Mycorrhizal.type','year')) %>% 
+    filter(date.x > date.y) %>% 
+    group_by(individualID,year) %>% 
+    slice(1:1) %>%
+    ungroup() %>%
+    dplyr::select(-date.y) %>%
+    rename(greendownDate=date.x,greendownDOY=dayOfYear.x) %>%
+    dplyr::select(individualID,year,greendownDate,greendownDOY)
+  
+  leavesPhenophases <- full_join(greenUpDat,greenDownDat,by=c('individualID','year'))
+  return(leavesPhenophases)
+}
 
 s=14
 pheDat <- read.csv(paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',NEON_siteNames[s],'.csv'))

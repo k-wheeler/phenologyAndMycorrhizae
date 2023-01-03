@@ -15,7 +15,7 @@ for(i in 1:nrow(phenoCamURLs)){ #issue: 16,20
   df <- read_phenocam(file.path(tempdir(),
                                 paste0(phenoCamURLs$phenocam_id[i],"_",
                                        phenoCamURLs$ROI[i],"_1day.csv")))
-  phenophases(df,out_dir = paste0(dataPath,'phenoCamData'),internal=FALSE,
+  test <- phenophases(df,out_dir = paste0(dataPath,'phenoCamData'),internal=FALSE,
               lower_thresh=0.15,middle_thresh=0.50,upper_thresh=0.85)
 }
 

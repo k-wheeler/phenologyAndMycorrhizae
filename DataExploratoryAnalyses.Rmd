@@ -377,6 +377,59 @@ p=5
 
 ```
 
+
+#For each site, do the covariates that occur with each phenophase differ between MTs? 
+```{r}
+p <- 2 #Bud burst 
+  print(NEON_phenophase_names[p])
+  subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  subDat <- subDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],
+                              growthForm=="Deciduous broadleaf")
+  subDat$year <- as.numeric(subDat$year)
+  subDat <- left_join(subDat,allPrecipData[,-3],by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allTempData,by=c('siteID','date','year'))
+  subDat <- left_join(subDat,allSunlightTimes,by=c('siteID','date'))
+  
+  ggplot(subDat,aes(as.numeric(as.character(GDD_10)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("GDD_10 (C)")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("GDD_10 of Bud Burst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,600))
+  
+    ggplot(subDat,aes(as.numeric(as.character(GDD_5)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("GDD_5 (C)")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("GDD_5 of Bud Burst in Deciduous Broadleaf")+
+  scale_x_continuous(limits=c(0,600))
+    
+  ggplot(subDat,aes(as.numeric(as.character(daylength)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Daylength (hours)")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("Daylength of Bud Burst in Deciduous Broadleaf")
+  
+    ggplot(subDat,aes(as.numeric(as.character(height)),fct_reorder(siteID,decimalLatitude),fill=Mycorrhizal.type)) +
+  geom_density_ridges2(scale=1)+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle=90))+
+  xlab("Plant Height")+
+  ylab("Site ID (Ordered by Latitude)")+
+    ggtitle("Plant Height in Deciduous Broadleaf")
+  
+```
+
+What I learned: I don't really see patterns in if a MT covariates varied more for one that the other. 
+
+AM-associated plants are shorter than the EcM-associated ones so the earlier budburst is really just like because they are understory plants. Well crap. 
+
 #Do the basic GAMs work for any of the phenophase and PFTs?
 
 ```{r}
@@ -456,7 +509,107 @@ p <- 2 #Bud burst
   
 ```
 
+#Is phenology correlated with soil microbial biodiversity? 
+```{r}
+allBioDat <- read.csv(paste0(dataPath,dataName,"/soilMicrobediversityData.csv"))
 
+allPlotIDLatLong <- matrix(nrow=0,ncol=3)
+for(s in seq_along(NEON_siteNames)){
+  print(NEON_siteNames[s])
+  files <- dir(path=paste0(dataPath,'NEON_presence-cover-plant-CLEAN'),
+               pattern=NEON_siteNames[s])
+  for(f in 1:5){
+    subDat <- read.csv(paste0(dataPath,'NEON_presence-cover-plant-CLEAN/',files[f]))[,c('decimalLatitude','decimalLongitude','plotID')] %>% unique()
+    allPlotIDLatLong <- rbind(allPlotIDLatLong,subDat)
+  }
+}
+
+allPlotIDLatLong <- allPlotIDLatLong %>% unique()
+allBioDat <- left_join(allBioDat,allPlotIDLatLong,by="plotID")
+
+phenoCamURLs <- read.csv(paste0(dataPath,'phenocamURLS.csv'))
+
+files <- dir(path=paste0(dataPath,'phenoCamData'),pattern="dates")
+allPCdat <- matrix(nrow=0,ncol=19)
+for(f in seq_along(files)){
+  subDat <- read.csv(paste0(dataPath,'phenoCamData/',files[f]),skip=16) %>%
+    filter(gcc_value=="gcc_90")
+  allPCdat <- rbind(allPCdat,subDat)
+  
+}
+allPCdat_cleaned <- matrix(nrow=0,ncol=8)
+subDat <- allPCdat[,c('site','veg_type','roi_id','direction',
+                                                   'transition_15','transition_15_lower_ci',
+                                                   'transition_15_upper_ci')]
+colnames(subDat) <- c('site','veg_type','roi_id','direction',
+                                                   'date','lower_ci',
+                                                   'upper_ci')
+subDat$transition <- 15
+allPCdat_cleaned <- rbind(allPCdat_cleaned,subDat)
+subDat <- allPCdat[,c('site','veg_type','roi_id','direction',
+                                                   'transition_50','transition_50_lower_ci',
+                                                   'transition_50_upper_ci')]
+colnames(subDat) <- c('site','veg_type','roi_id','direction',
+                                                   'date','lower_ci',
+                                                   'upper_ci')
+subDat$transition <- 50
+allPCdat_cleaned <- rbind(allPCdat_cleaned,subDat)
+subDat <- allPCdat[,c('site','veg_type','roi_id','direction',
+                                                   'transition_85','transition_85_lower_ci',
+                                                   'transition_85_upper_ci')]
+colnames(subDat) <- c('site','veg_type','roi_id','direction',
+                                                   'date','lower_ci',
+                                                   'upper_ci')
+subDat$transition <- 85
+allPCdat_cleaned <- rbind(allPCdat_cleaned,subDat)
+allPCdat_cleaned$siteID <- sapply(strsplit(as.character(allPCdat_cleaned$site), "[.]"), `[`, 3)
+allPCdat_cleaned <- left_join(allPCdat_cleaned,allTempData,by=c('siteID','date'))
+allPCdat_cleaned <- left_join(allPCdat_cleaned,allSunlightTimes,by=c('siteID','date'))
+allPCdat_cleaned <- left_join(allPCdat_cleaned,allPrecipData,by=c('siteID','date','year'))
+
+phenoCam_siteData <- read.csv(paste0(dataPath,"NEON_PhenoCam_SiteData.csv"))
+phenoCam_siteData$siteID <- sapply(strsplit(as.character(phenoCam_siteData$phenoCamID), "[.]"), `[`, 3)
+
+allPlotIDLatLong$difference <- NA
+allPlotIDLatLong$siteID <- sapply(strsplit(as.character(allPlotIDLatLong$plotID), "_"), `[`, 1)
+allPlotIDLatLong <- left_join(allPlotIDLatLong,phenoCam_siteData,by="siteID")
+allPlotIDLatLong$direction[is.na(allPlotIDLatLong$direction)] <- "N" #Assume missing directions are North because most cameras are pointed North
+allPlotIDLatLong[allPlotIDLatLong$direction=="N",'difference'] <- allPlotIDLatLong[allPlotIDLatLong$direction=="N",'decimalLatitude']-allPlotIDLatLong[allPlotIDLatLong$direction=="N",'Lat']
+
+allPlotIDLatLong[allPlotIDLatLong$direction=="W",'difference'] <- allPlotIDLatLong[allPlotIDLatLong$direction=="W",'decimalLongitude']-allPlotIDLatLong[allPlotIDLatLong$direction=="W",'Lon']
+
+allPlotIDLatLong[allPlotIDLatLong$direction=="NNE",'difference'] <- sqrt((allPlotIDLatLong[allPlotIDLatLong$direction=="NNE",'decimalLongitude']-allPlotIDLatLong[allPlotIDLatLong$direction=="NNE",'Lon'])**2 + (allPlotIDLatLong[allPlotIDLatLong$direction=="NNE",'decimalLatitude']-allPlotIDLatLong[allPlotIDLatLong$direction=="NNE",'Lat'])**2)
+
+allPlotIDLatLong_filtered <- allPlotIDLatLong[allPlotIDLatLong$difference>0,] %>%
+  filter(direction!="NNE") #Deal with NNE later because it's more complicated because latitude and longitude differences have to be positive 
+
+allPlotIDLatLong_filtered <- allPlotIDLatLong_filtered %>% group_by(siteID) %>%
+  slice(which.min(difference))
+
+allBioDat_plotFiltered <- allBioDat %>% 
+  filter(plotID %in% allPlotIDLatLong_filtered$plotID) %>%
+  mutate(year=lubridate::year(date))%>%
+  group_by(year,siteID) %>%
+  summarise(year_totalSpecies=sum(totalSpecies),year_totalIndividual=sum(totalIndividuals))
+
+
+allBioDat_plotFiltered$biodiversity <- allBioDat_plotFiltered$year_totalSpecies/allBioDat_plotFiltered$year_totalIndividual
+
+
+allPCdat_cleaned_15 <- allPCdat_cleaned %>% filter(direction=="rising",transition==15,veg_type=="DB")
+
+allBioDat_plotFiltered_15 <- left_join(allBioDat_plotFiltered,allPCdat_cleaned_15,by=c('year','siteID'))
+
+plot(allBioDat_plotFiltered_15$biodiversity,allBioDat_plotFiltered_15$GDD_0,pch=20)
+mdl <- lm(GDD_0~biodiversity,data = allBioDat_plotFiltered_15)
+abline(mdl)
+summary(mdl)
+
+```
+
+What I learned: There might be some positive correlations between soil microbe biodiversity and phenocam, but there aren't enough site-years to test because soil microbe data started years before phenocam, but is 4 years delayed.
+
+#Extra Code
 ```{r,eval=FALSE}
 p <- 2 #Bud burst 
   print(NEON_phenophase_names[p])
