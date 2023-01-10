@@ -16,16 +16,19 @@ downloadNEONdata <- function(dataName,NEON_ID){
   }
 }
 
-combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath){
+combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath,saveFile=TRUE){
   allData <- matrix(nrow=0,ncol=(length(selectColumns)+2))
   IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
   if(length(inFileName)==1){
-  for(s in seq_along(NEON_siteNames)){
-    print(NEON_siteNames[s])
-    subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))
-    
-    allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
-  }
+    for(s in seq_along(NEON_siteNames)){
+      print(NEON_siteNames[s])
+      subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))
+      if(dataName=="NEON_soilProperties"){
+        allData <- rbind(allData,subDat[,c('siteID','collectDate',selectColumns)])
+      }else{
+        allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
+      }
+    }
   }else if(length(inFileName)==2){
     for(s in seq_along(NEON_siteNames)){
       print(NEON_siteNames[s])
@@ -37,11 +40,15 @@ combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath){
         subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName[2]))
         subDat <- subDat %>% mutate(precipBulk=secPrecipBulk,precipExpUncert=secPrecipExpUncert,precipQF=secPrecipSciRvwQF)
       }
-      allData <- rbind(allData,subDat[,c('siteID','startDateTime','precipBulk','precipExpUncert','precipQF')])
+      allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
     }
   }
   outFileName <- paste0(dataName,"ALLdata.csv")
-  write.csv(file=paste0(dataPath,outFileName),allData,row.names = FALSE,quote=FALSE)
+  if(saveFile){
+    write.csv(file=paste0(dataPath,outFileName),allData,row.names = FALSE,quote=FALSE)
+  }else{
+    return(allData)
+  }
 }
 
 calculateDailyWeather <- function(dataName,dataPath,varName,funType){

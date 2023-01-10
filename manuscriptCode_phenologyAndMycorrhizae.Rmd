@@ -28,7 +28,6 @@ downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 
-
 ```
 
 #Triple Air Temperature at Top of Canopy
@@ -80,15 +79,65 @@ combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
 ```{r}
 dataName="NEON_SoilMicrobeComposition"
 NEON_ID='DP1.10081.001'
-selectColumns <-
+#selectColumns <-
 inFileName <- c("mcc_soilSeqVariantMetadata_16S.csv","mcc_soilSeqVariantMetadata_ITS.csv")
-varName <- 
+#varName <- 
 
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #Note: I had to modify this function to remove the indices for sites that didn't seem to have data. 
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 ```
 
+#Download NEON Soil Physical and Chemical Properties
+```{r}
+dataName <- "NEON_soilProperties"
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+NEON_ID <- "DP1.10086.001"
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+#inFileNames <- c(,"sls_soilMoisture","sls_soilpH")
+inFileName <- "sls_soilCoreCollection.csv"
+selectColumns <- c('plotID','decimalLatitude','decimalLongitude','elevation','standingWaterDepth','horizon',
+                   'soilTemp','litterDepth','sampleTopDepth','sampleBottomDepth')
+dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+
+inFileName <- "sls_soilpH.csv"
+selectColumns <- c('plotID','horizon','soilInWaterpH','soilInCaClpH','pHSoilInWaterMass','pHWaterVol',
+                   'waterpHRatio','pHSoilInCaClMass','pHCaClVol','caclpHRatio')
+dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','plotID','horizon'))
+
+inFileName <- "sls_soilMoisture.csv"
+selectColumns <- c('plotID','horizon','boatMass','freshMassBoatMass','dryMassBoatMass','soilMoisture','dryMassFraction')
+dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID','horizon'))
+
+outFileName <- paste0(dataName,"ALLdata.csv")
+write.csv(file=paste0(dataPath,outFileName),allData,row.names = FALSE,quote=FALSE)
+
+```
+
+#Download Photosynthetically active radiation (PAR)
+```{r}
+dataName="NEON_PAR"
+NEON_ID='DP1.00024.001'
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+# selectColumns <- c('precipBulk','precipExpUncert','precipQF')
+# inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
+# varName <- "precipBulk"
+
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath)
+
+
+```
 
 
 #NEON PhenoCam Observations

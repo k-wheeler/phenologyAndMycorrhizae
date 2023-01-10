@@ -432,7 +432,7 @@ AM-associated plants are shorter than the EcM-associated ones so the earlier bud
 
 #Do the basic GAMs work for any of the phenophase and PFTs?
 
-```{r}
+```{r,eval=FALSE}
 p <- 2 #Bud burst 
   print(NEON_phenophase_names[p])
   subDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
@@ -511,6 +511,7 @@ p <- 2 #Bud burst
 
 #Is phenology correlated with soil microbial biodiversity? 
 ```{r}
+dataName <- "NEON_SoilMicrobeComposition"
 allBioDat <- read.csv(paste0(dataPath,dataName,"/soilMicrobediversityData.csv"))
 
 allPlotIDLatLong <- matrix(nrow=0,ncol=3)
@@ -595,16 +596,27 @@ allBioDat_plotFiltered <- allBioDat %>%
 
 allBioDat_plotFiltered$biodiversity <- allBioDat_plotFiltered$year_totalSpecies/allBioDat_plotFiltered$year_totalIndividual
 
+transitions <- c(15,50,85)
+t=1
 
-allPCdat_cleaned_15 <- allPCdat_cleaned %>% filter(direction=="rising",transition==15,veg_type=="DB")
+par(mfrow=c(2,3))
+for(drt in c("rising","falling")){
+  for(t in seq_along(transitions)){
+    allPCdat_cleaned_trans <- allPCdat_cleaned %>% 
+      filter(direction==drt,transition==transitions[t],veg_type=="DB")
+    allBioDat_plotFiltered_trans <- left_join(allBioDat_plotFiltered,allPCdat_cleaned_trans,by=c('year','siteID'))
+    
+    mdl <- lm(GDD_5~biodiversity,data = allBioDat_plotFiltered_trans)
+    sm <- summary(mdl)
+    plot(allBioDat_plotFiltered_trans$biodiversity,allBioDat_plotFiltered_trans$GDD_5,pch=20,
+         ylab="Biodiversity",xlab=paste0("GDD_5 at ",transitions[t],"% ",drt),main=paste("p-value on slope:",round(sm$coefficients[2,4],digits=3)))
 
-allBioDat_plotFiltered_15 <- left_join(allBioDat_plotFiltered,allPCdat_cleaned_15,by=c('year','siteID'))
+    abline(mdl)
+    summary(mdl)
+  }
+}
 
-plot(allBioDat_plotFiltered_15$biodiversity,allBioDat_plotFiltered_15$GDD_0,pch=20)
-mdl <- lm(GDD_0~biodiversity,data = allBioDat_plotFiltered_15)
-abline(mdl)
-summary(mdl)
-
+par(mfrow=c(1,1))
 ```
 
 What I learned: There might be some positive correlations between soil microbe biodiversity and phenocam, but there aren't enough site-years to test because soil microbe data started years before phenocam, but is 4 years delayed.
