@@ -18,7 +18,7 @@ NEON_siteNames <- c("ABBY","BARR","BART","BLAN","BONA","CLBJ","CPER","DCFS","DEJ
 length_NEON_siteNames <- length(NEON_siteNames)
 fungalRootDat <- read.csv('Data/fungalRootAssociations.csv',header=TRUE)
 mycorrhizeTypes <- unique(fungalRootDat$Mycorrhizal.type)
-dataPath <- "/Users/Kathryn/Documents/Postdoc_Research/phenologyAndMycorrhizae/Data/"
+dataPath <- "Data/"
 
 siteData <- read_csv(paste0(dataPath,'NEON_Field_Site_Metadata_20220412.csv'))
 siteData <- siteData %>% filter(field_site_type%in%c("Gradient Terrestrial","Core Terrestrial"))
