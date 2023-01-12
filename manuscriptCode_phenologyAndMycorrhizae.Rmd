@@ -18,7 +18,7 @@ source('NEON_Data_DownloadAndProcess.R')
 Download NEON Data
 
 #Single Air Temperature At Various Heights 
-```{r}
+```{r,eval=FALSE}
 dataName="NEON_SingleAirTemperature"
 NEON_ID='DP1.00002.001'
 selectColumns <- c('horizontalPosition','verticalPosition','tempSingleMean','tempSingleExpUncert','finalQF')
@@ -31,7 +31,7 @@ combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
 ```
 
 #Triple Air Temperature at Top of Canopy
-```{r} 
+```{r,eval=FALSE} 
 ##Need to redownload!! 
 dataName="NEON_TemperatureData"
 NEON_ID='DP1.00003.001'
@@ -48,7 +48,7 @@ gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
 ```
 
 #Precipitation
-```{r}
+```{r,eval=FALSE}
 dataName="NEON_PrecipitationData"
 NEON_ID='DP1.00006.001'
 selectColumns <- c('precipBulk','precipExpUncert','precipQF')
@@ -64,7 +64,7 @@ gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
 ```
 
 #NEON Phenology Observations 
-```{r}
+```{r,eval=FALSE}
 source('combineNEONdata_PhenoObs.R')
 dataName="NEON_PhenologyObservations"
 NEON_ID='DP1.10055.001'
@@ -76,7 +76,7 @@ combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
 ```
 
 #Download NEON Soil Microbe Data
-```{r}
+```{r,eval=FALSE}
 dataName="NEON_SoilMicrobeComposition"
 NEON_ID='DP1.10081.001'
 #selectColumns <-
@@ -89,7 +89,7 @@ combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
 ```
 
 #Download NEON Soil Physical and Chemical Properties
-```{r}
+```{r,eval=FALSE}
 dataName <- "NEON_soilProperties"
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
@@ -141,7 +141,7 @@ combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
 
 
 #NEON PhenoCam Observations
-```{r}
+```{r,eval=FALSE}
 source('determinePhenoCamURLs.R')
 source('downloadPhenoCamAndCalculateTransitions.R') #Still need to change to have it save it somewhere
 

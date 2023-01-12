@@ -2,13 +2,12 @@
 library(tidyverse)
 library(scales)
 library("raster")
-library("rhdf5")
-library("neonUtilities")
-library("devtools")
-library("geoNEON")
-library('suncalc')
-library(daymetr)
-
+library("devtools") #
+library("rhdf5") #
+library("neonUtilities") #
+library('suncalc') ##
+library(daymetr) #
+library("geoNEON") #
 
 #library(inborutils)
 options(stringsAsFactors=FALSE)
