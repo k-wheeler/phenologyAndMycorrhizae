@@ -14,5 +14,5 @@ print("Created directories")
 # inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
 # varName <- "precipBulk"
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE)
 print("finished downloading data")

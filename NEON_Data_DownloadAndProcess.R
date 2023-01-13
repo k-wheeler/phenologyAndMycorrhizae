@@ -1,4 +1,4 @@
-downloadNEONdata <- function(dataName,NEON_ID){
+downloadNEONdata <- function(dataName,NEON_ID,andStack=TRUE){
   #Create Site-Specific Folders for Downloading 
   for(s in seq_along(NEON_siteNames)){
     print(NEON_siteNames[s])
@@ -11,8 +11,9 @@ downloadNEONdata <- function(dataName,NEON_ID){
     savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
     zipsByProduct(dpID=NEON_ID,site=NEON_siteNames[s],
                   savepath=savePath,check.size = F)
-    
-    stackByTable(paste0(savePath,'/filesToStack',IDnum))
+    if(andStack){
+      stackByTable(paste0(savePath,'/filesToStack',IDnum))
+    }
   }
 }
 
