@@ -6,7 +6,7 @@ downloadNEONdata <- function(dataName,NEON_ID,andStack=TRUE){
   }
   #Download and Stack the Data
   IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
-  for(s in seq_along(NEON_siteNames)){
+  for(s in seq_along(NEON_siteNames)[3:47]){
     print(s)
     savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
     zipsByProduct(dpID=NEON_ID,site=NEON_siteNames[s],
