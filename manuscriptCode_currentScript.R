@@ -14,5 +14,12 @@ print("Created directories")
 # inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
 # varName <- "precipBulk"
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE)
-print("finished downloading data")
+#downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE)
+#print("finished downloading data")
+
+IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+for(s in seq_along(NEON_siteNames)[4:47]){
+  print(s)
+  savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
+  stackByTable(paste0(savePath,'/filesToStack',IDnum))
+}
