@@ -7,12 +7,21 @@ print("loaded packages")
 dataName="NEON_SoilTemp"
 NEON_ID='DP1.00041.001'
 
-if(!file.exists(paste0(dataPath,"/",dataName))){
-  dir.create(paste0(dataPath,"/",dataName))
+IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+for(s in seq_along(NEON_siteNames)[1:47]){
+  print(s)
+  savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
+  if(file.exists(paste0(savePath,'/filesToStack',IDnum))){
+    stackByTable(paste0(savePath,'/filesToStack',IDnum))
+  }
 }
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
-                 includedSeq=seq(46,47))
+# if(!file.exists(paste0(dataPath,"/",dataName))){
+#   dir.create(paste0(dataPath,"/",dataName))
+# }
+
+# downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
+#                  includedSeq=seq(46,47))
 # dataName="NEON_Roots"
 # NEON_ID='DP1.10067.001'
 
