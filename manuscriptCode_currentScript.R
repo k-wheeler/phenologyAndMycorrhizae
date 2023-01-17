@@ -11,11 +11,11 @@ print("loaded packages")
 # dataName="NEON_relativeHumidity"
 # NEON_ID='DP1.00098.001'
 
-dataName="NEON_plantFoliarTraits"
-NEON_ID="DP1.10026.001"
+# dataName="NEON_plantFoliarTraits"
+# NEON_ID="DP1.10026.001"
 # 
-# dataName="NEON_particulateMass"
-# NEON_ID="DP1.00101.001"
+dataName="NEON_particulateMass"
+NEON_ID="DP1.00101.001"
 # 
 # dataName="NEON_litterfall"
 # NEON_ID="DP1.10033.001"
