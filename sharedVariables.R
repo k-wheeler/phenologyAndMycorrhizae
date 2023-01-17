@@ -8,6 +8,7 @@ library("neonUtilities") #
 library('suncalc') ##
 library(daymetr) #
 library("geoNEON") #
+library(doParallel)
 
 #library(inborutils)
 options(stringsAsFactors=FALSE)

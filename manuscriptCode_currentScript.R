@@ -3,12 +3,15 @@ print("entered script")
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 
+n.cores <- 10
+registerDoParallel(cores=n.cores)
+
 print("loaded packages")
 dataName="NEON_SoilTemp"
 NEON_ID='DP1.00041.001'
 
 IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
-for(s in seq_along(NEON_siteNames)[1:47]){
+foreach(s=seq_along(NEON_siteNames)[4:47]) %do% {
   print(s)
   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
   if(file.exists(paste0(savePath,'/filesToStack',IDnum))){
