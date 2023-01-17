@@ -13,15 +13,15 @@ print("loaded packages")
 
 dataName="NEON_plantFoliarTraits"
 NEON_ID="DP1.10026.001"
-
-dataName="NEON_particulateMass"
-NEON_ID="DP1.00101.001"
-
-dataName="NEON_litterfall"
-NEON_ID="DP1.10033.001"
-
-dataName="NEON_canopyWaterIndices"
-NEON_ID="DP3.30019.001"
+# 
+# dataName="NEON_particulateMass"
+# NEON_ID="DP1.00101.001"
+# 
+# dataName="NEON_litterfall"
+# NEON_ID="DP1.10033.001"
+# 
+# dataName="NEON_canopyWaterIndices"
+# NEON_ID="DP3.30019.001"
 
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
