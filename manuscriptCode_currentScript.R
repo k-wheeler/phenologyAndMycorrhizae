@@ -6,8 +6,8 @@ source('NEON_Data_DownloadAndProcess.R')
 print("loaded packages")
 # dataName="NEON_SoilTemp"
 # NEON_ID='DP1.00041.001'
-dataName="NEON_MicrobeBiomass"
-NEON_ID='DP1.10104.001'
+dataName="NEON_Roots"
+NEON_ID='DP1.10067.001'
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
