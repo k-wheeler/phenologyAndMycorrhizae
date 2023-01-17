@@ -1,10 +1,11 @@
 args = commandArgs(trailingOnly=TRUE)
-my_task_id=args[1]
-num_tasks=args[2]
+print(args)
+my_task_id=as.numeric(args[1])
+num_tasks=as.numeric(args[2])
 fnames <- 10:47
 my_fnames=fnames[seq((my_task_id+1),47,num_tasks)]
 
-for(s in fnames){
+for(s in my_fnames){
   
   source('sharedVariables.R')
   source('NEON_Data_DownloadAndProcess.R')
