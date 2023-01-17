@@ -21,17 +21,19 @@ NEON_ID="DP1.10033.001"
 # dataName="NEON_canopyWaterIndices"
 # NEON_ID="DP3.30019.001"
 
-if(!file.exists(paste0(dataPath,"/",dataName))){
-  dir.create(paste0(dataPath,"/",dataName))
-}
-
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
-                 includedSeq=seq(46,47))
-print("downloaded data")
-
-# IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
-# for(s in seq_along(NEON_siteNames)[4:47]){
-#   print(s)
-#   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
-#   stackByTable(paste0(savePath,'/filesToStack',IDnum))
+# if(!file.exists(paste0(dataPath,"/",dataName))){
+#   dir.create(paste0(dataPath,"/",dataName))
 # }
+# 
+# downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
+#                  includedSeq=seq(46,47))
+# print("downloaded data")
+
+IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+for(s in seq_along(NEON_siteNames)[1:47]){
+  print(s)
+  savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
+  if(file.exists(paste0(savePath,'/filesToStack',IDnum))){
+    stackByTable(paste0(savePath,'/filesToStack',IDnum))
+  }
+}
