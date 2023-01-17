@@ -26,7 +26,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
 }
 
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
-                 includedSeq=seq(1,47))
+                 includedSeq=seq(3,47))
 print("downloaded data")
 
 # IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
