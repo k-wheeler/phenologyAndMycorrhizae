@@ -15,7 +15,7 @@ print("loaded packages")
 # NEON_ID="DP1.10026.001"
 # 
 # 
-dataName="NEON_litterfall" #No: 2, 7,8, 11, 17, 18
+dataName="NEON_litterfall" #No: 2, 7,8, 11, 17, 18, 20
 NEON_ID="DP1.10033.001"
 # 
 # dataName="NEON_canopyWaterIndices"
@@ -26,7 +26,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
 }
 
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE,
-                 includedSeq=seq(19,47))
+                 includedSeq=seq(21,47))
 print("downloaded data")
 
 # IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
