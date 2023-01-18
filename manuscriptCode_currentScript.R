@@ -18,7 +18,8 @@ for(s in my_fnames){
   
   print(s)
   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
-  if(file.exists(paste0(savePath,'/filesToStack',IDnum))){
+  if(file.exists(paste0(savePath,'/filesToStack',IDnum))&
+     !file.exists(paste0(savePath,'/filesToStack',IDnum,"/stackedFiles"))){
     stackByTable(paste0(savePath,'/filesToStack',IDnum))
   }
   
