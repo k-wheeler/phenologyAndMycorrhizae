@@ -1,11 +1,11 @@
-# args = commandArgs(trailingOnly=TRUE)
-# print(args)
-# my_task_id=as.numeric(args[1])
-# num_tasks=as.numeric(args[2])
-# fnames <- 10:47
-# my_fnames=fnames[seq((my_task_id+1),47,num_tasks)]
-# 
-# for(s in my_fnames){
+args = commandArgs(trailingOnly=TRUE)
+print(args)
+my_task_id=as.numeric(args[1])
+num_tasks=as.numeric(args[2])
+fnames <- 10:47
+my_fnames=fnames[seq((my_task_id+1),47,num_tasks)]
+
+for(s in my_fnames){
   
   source('sharedVariables.R')
   source('NEON_Data_DownloadAndProcess.R')
@@ -21,7 +21,9 @@
   
   print(s)
   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
-  if(file.exists(paste0(savePath,'/filesToStack',IDnum))){
+  fls <- dir(path=paste0(savePath,'/filesToStack',IDnum),pattern="NEON")
+  if(file.exists(paste0(savePath,'/filesToStack',IDnum))
+     &(length(fls)>0)){
     stackByTable(paste0(savePath,'/filesToStack',IDnum))
   }
   
@@ -92,4 +94,4 @@
   #                  includedSeq=seq(46,47))
   # print("downloaded data")
   
-#}
+}
