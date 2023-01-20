@@ -17,14 +17,14 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
-inFileName <- 'bbc_dilution'
+inFileName <- 'bbc_dilution.csv'
 selectColumns <- c('plotID','sampleVolume',
                    'dryMass','somDryMass')
 
 dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
-inFileName <- 'bbc_percore'
+inFileName <- 'bbc_percore.csv'
 selectColumns <- c('plotID','decimalLatitude','decimalLongitude',
                    'litterDepth','rootSampleDepth')
 
@@ -33,7 +33,7 @@ dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
 
 allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','plotID'))
 
-inFileName <- 'bbc_rootChemistry'
+inFileName <- 'bbc_rootChemistry.csv'
 selectColumns <- c('plotID','plotType',
                    'd15N','d13C','nitrogenPercent','carbonPercent',
                    'CNratio','cnIsotopeQF','cnPercentQF')
@@ -43,10 +43,12 @@ dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
 
 allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID'))
 
-inFileName <- "bbc_rootmass"
+inFileName <- "bbc_rootmass.csv"
 selectColumns <- c('plotID','dryMass','mycorrhizaeVisible')
 
 dat4 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
 allDat <- full_join(allDat,dat4,by=c('siteID','collectDate','plotID'))
+
+
