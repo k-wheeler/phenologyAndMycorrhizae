@@ -10,9 +10,12 @@ for(s in my_fnames){
   source('sharedVariables.R')
   source('NEON_Data_DownloadAndProcess.R')
   
-  print("loaded packages")
-  dataName="NEON_SoilTemp"
-  NEON_ID='DP1.00041.001'
+  # print("loaded packages")
+  # dataName="NEON_SoilTemp"
+  # NEON_ID='DP1.00041.001'
+  
+  dataName="NEON_PAR"
+  NEON_ID='DP1.00024.001'
   
   IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
   
