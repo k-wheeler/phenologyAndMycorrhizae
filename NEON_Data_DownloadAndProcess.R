@@ -23,11 +23,13 @@ combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath,s
   if(length(inFileName)==1){
     for(s in seq_along(NEON_siteNames)){
       print(NEON_siteNames[s])
-      subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))
-      if(dataName=="NEON_soilProperties"){
-        allData <- rbind(allData,subDat[,c('siteID','collectDate',selectColumns)])
-      }else{
-        allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
+      if(file.exists(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))){
+        subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))
+        if(dataName=="NEON_soilProperties"){
+          allData <- rbind(allData,subDat[,c('siteID','collectDate',selectColumns)])
+        }else{
+          allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
+        }
       }
     }
   }else if(length(inFileName)==2){
