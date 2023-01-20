@@ -1,23 +1,24 @@
-args = commandArgs(trailingOnly=TRUE)
-print(args)
-my_task_id=as.numeric(args[1])
-num_tasks=as.numeric(args[2])
-fnames <- 10:47
-my_fnames=fnames[seq((my_task_id+1),47,num_tasks)]
+# args = commandArgs(trailingOnly=TRUE)
+# print(args)
+# my_task_id=as.numeric(args[1])
+# num_tasks=as.numeric(args[2])
+# fnames <- 10:47
+# my_fnames=fnames[seq((my_task_id+1),47,num_tasks)]
+# 
+# for(s in my_fnames){
 
-for(s in my_fnames){
-  
-  source('sharedVariables.R')
-  source('NEON_Data_DownloadAndProcess.R')
-  
-  # print("loaded packages")
-  # dataName="NEON_SoilTemp"
-  # NEON_ID='DP1.00041.001'
-  
-  dataName="NEON_PAR"
-  NEON_ID='DP1.00024.001'
-  
-  IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+source('sharedVariables.R')
+source('NEON_Data_DownloadAndProcess.R')
+
+# print("loaded packages")
+# dataName="NEON_SoilTemp"
+# NEON_ID='DP1.00041.001'
+
+dataName="NEON_PAR"
+NEON_ID='DP1.00024.001'
+
+IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+for(s in seq_along(NEON_siteNames)){
   
   print(s)
   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
