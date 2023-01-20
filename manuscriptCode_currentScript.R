@@ -16,17 +16,21 @@ source('NEON_Data_DownloadAndProcess.R')
 
 dataName="NEON_PAR"
 NEON_ID='DP1.00024.001'
+selectColumns <- c('verticalPosition','PARMean','PARMinimum','PARMaximum','PARVariance','PARFinalQF')
+inFileName <- "PARPAR_30min.csv"
 
 IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
 for(s in seq_along(NEON_siteNames)){
   
   print(s)
   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
-  fls <- dir(path=paste0(savePath,'/filesToStack',IDnum),pattern="NEON")
-  if(file.exists(paste0(savePath,'/filesToStack',IDnum))
-     &(length(fls)>0)){
-    stackByTable(paste0(savePath,'/filesToStack',IDnum))
-  }
+  combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                  inFileName=inFileName,dataPath=dataPath)
+  # fls <- dir(path=paste0(savePath,'/filesToStack',IDnum),pattern="NEON")
+  # if(file.exists(paste0(savePath,'/filesToStack',IDnum))
+  #    &(length(fls)>0)){
+  #   stackByTable(paste0(savePath,'/filesToStack',IDnum))
+  # }
   
   # if(!file.exists(paste0(dataPath,"/",dataName))){
   #   dir.create(paste0(dataPath,"/",dataName))
