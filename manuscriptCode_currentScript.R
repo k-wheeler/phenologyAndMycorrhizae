@@ -16,7 +16,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
+#downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
 
 selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
 inFileName <- "ST_30_minute.csv"
