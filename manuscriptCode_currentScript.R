@@ -13,10 +13,6 @@ source('NEON_Data_DownloadAndProcess.R')
 dataName="NEON_Roots"
 NEON_ID='DP1.10067.001'
 
-if(!file.exists(paste0(dataPath,"/",dataName))){
-  dir.create(paste0(dataPath,"/",dataName))
-}
-
 inFileName <- 'bbc_dilution.csv'
 selectColumns <- c('plotID','sampleVolume',
                    'dryMass','somDryMass')
@@ -50,5 +46,5 @@ dat4 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
 allDat <- full_join(allDat,dat4,by=c('siteID','collectDate','plotID'))
-
-
+outFileName <- paste0(dataName,"ALLdata.csv")
+write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
