@@ -17,6 +17,18 @@ source('NEON_Data_DownloadAndProcess.R')
 
 Download NEON Data
 
+#NEON Phenology Observations 
+```{r,eval=FALSE}
+source('combineNEONdata_PhenoObs.R')
+dataName="NEON_PhenologyObservations"
+NEON_ID='DP1.10055.001'
+
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
+combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
+combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
+```
+
 #Single Air Temperature At Various Heights 
 ```{r,eval=FALSE}
 dataName="NEON_SingleAirTemperature"
@@ -63,17 +75,25 @@ gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
 
 ```
 
-#NEON Phenology Observations 
-```{r,eval=FALSE}
-source('combineNEONdata_PhenoObs.R')
-dataName="NEON_PhenologyObservations"
-NEON_ID='DP1.10055.001'
+#Download Photosynthetically active radiation (PAR)
+```{r}
+dataName="NEON_PAR"
+NEON_ID='DP1.00024.001'
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+selectColumns <- c('verticalPosition','PARMean','PARMinimum','PARMaximum','PARVariance','PARFinalQF')
+inFileName <- "PARPAR_30min.csv"
+# varName <- "precipBulk"
 
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
-combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
-combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
-combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
+combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath)
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=sum)
+
+
 ```
+
 
 #Download NEON Soil Microbe Data
 ```{r,eval=FALSE}
@@ -88,13 +108,14 @@ combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 ```
 
-#Download NEON Soil Physical and Chemical Properties
+#Download NEON Soil Physical and Chemical Properties (Need to finish combining)
 ```{r,eval=FALSE}
 dataName <- "NEON_soilProperties"
+NEON_ID <- "DP1.10086.001"
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
-NEON_ID <- "DP1.10086.001"
+
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 #inFileNames <- c(,"sls_soilMoisture","sls_soilpH")
 inFileName <- "sls_soilCoreCollection.csv"
@@ -117,25 +138,117 @@ dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectCo
 allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID','horizon'))
 
 outFileName <- paste0(dataName,"ALLdata.csv")
-write.csv(file=paste0(dataPath,outFileName),allData,row.names = FALSE,quote=FALSE)
+write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 
 ```
 
-#Download Photosynthetically active radiation (PAR)
+
+#Download Soil Temp
 ```{r}
-dataName="NEON_PAR"
-NEON_ID='DP1.00024.001'
+dataName="NEON_SoilTemp"
+NEON_ID='DP1.00041.001'
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
-# selectColumns <- c('precipBulk','precipExpUncert','precipQF')
-# inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
-# varName <- "precipBulk"
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
-# combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
-#                 inFileName=inFileName,dataPath=dataPath)
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
 
+selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
+inFileName <- "ST_30_minute.csv"
+
+combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath)
+
+```
+
+#NEON Root Characteristics
+```{r, eval=FALSE}
+dataName="NEON_Roots"
+NEON_ID='DP1.10067.001'
+
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
+
+inFileName <- 'bbc_dilution.csv'
+selectColumns <- c('plotID','sampleVolume',
+                   'dryMass','somDryMass')
+
+dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                       selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+dat1 <- dat1 %>% mutate(density=dryMass/sampleVolume,
+                        somDensity=somDryMass/sampleVolume) %>%
+  dplyr::select(-c(sampleVolume,dryMass,somDryMass)) %>%
+  group_by(siteID,collectDate,plotID) %>% summarise(densityMean=mean(density),somDensityMean=mean(somDensity))
+
+
+inFileName <- 'bbc_percore.csv'
+selectColumns <- c('plotID','decimalLatitude','decimalLongitude',
+                   'litterDepth')
+
+dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                       selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+
+dat2 <- dat2 %>% group_by(siteID,collectDate,plotID) %>%
+  summarise(litterDepth=mean(litterDepth))
+
+allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','plotID'))
+
+inFileName <- 'bbc_rootChemistry.csv'
+selectColumns <- c('plotID','plotType',
+                   'd15N','d13C','nitrogenPercent','carbonPercent',
+                   'CNratio','cnIsotopeQF','cnPercentQF')
+
+dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                       selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE) 
+
+dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
+  filter(cnIsotopeQF=="OK",cnPercentQF=="OK") %>%
+  group_by(siteID,collectDate,plotID) %>% summarise(d15N=mean(d15N),
+                                                    d13C=mean(d13C),
+                                                    nitrogenPercent=
+                                                      mean(nitrogenPercent),
+                                                    carbonPercent=
+                                                      mean(carbonPercent),
+                                                    CNratio=
+                                                      mean(CNratio))
+  
+allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID'))
+
+inFileName <- "bbc_rootmass.csv"
+selectColumns <- c('plotID','dryMass','mycorrhizaeVisible') 
+
+dat4 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                       selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+names(dat4)[names(dat4)=="dryMass"] <- "rootDryMass"
+dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible=="N"] <- 0
+dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible=="Y"] <- 1
+dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible==""] <- NA
+
+dat4 <- dat4 %>% group_by(siteID,collectDate,plotID) %>%
+  summarise(rootDryMass=mean(rootDryMass),
+            mycorrhizaeVisiblePercent=mean(as.numeric(mycorrhizaeVisible),na.rm=TRUE))
+
+
+allDat <- full_join(allDat,dat4,by=c('siteID','collectDate','plotID'))
+outFileName <- paste0(dataName,"ALLdata.csv")
+write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
+```
+
+#NEON Plant Structural Characteristics
+```{r}
+
+```
+
+#NEON Litterfall
+```{r}
+
+```
+
+#NEON Foliar Traits
+```{r}
 
 ```
 
