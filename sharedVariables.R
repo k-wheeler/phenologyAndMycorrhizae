@@ -1,13 +1,13 @@
 #Shared Variables
 library(tidyverse)
+library('suncalc') ##
 library(scales)
+library("geoNEON") #
 library("raster")
 library("devtools") #
 library("rhdf5") #
-library("neonUtilities") #
-library('suncalc') ##
 library(daymetr) #
-library("geoNEON") #
+library("neonUtilities") #
 
 #library(inborutils)
 options(stringsAsFactors=FALSE)
