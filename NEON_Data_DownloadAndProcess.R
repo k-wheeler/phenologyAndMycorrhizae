@@ -151,3 +151,71 @@ gapFillFromDaymet <- function(dataName,dataPath,varName){
   # dev.off()
   write.csv(file=paste0(dataPath,dataName,'Dailydata_gapFilled.csv'),allOutput,row.names = FALSE,quote=FALSE)
 }
+
+gapFillFromDayMet_verticalProfiles <- function(dataName,dataPath,varName,funName){
+  allData <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character(funName),".csv"))
+  dayMetLRs <- read.csv(paste0(dataName,"towerHeight_LRfitsWithDayMet_",summaryStat,".csv"))
+  dayMetLRs <- dayMetLRs %>% dplyr::select(siteID,week,verticalPosition,term,estimate)
+  dayMetLRs <- pivot_wider(dayMetLRs,names_from = term,values_from = estimate)
+  colnames(dayMetLRs) <- c("siteID","week","verticalPosition","intercept","slope")
+  
+  allOutput <- matrix(nrow=0,ncol=4)
+
+  for(s in seq_along(NEON_siteNames)){
+    siteName <- NEON_siteNames[s]
+    print(siteName)
+    lat <- siteData$field_latitude[siteData$field_site_id==siteName]
+    lon <- siteData$field_longitude[siteData$field_site_id==siteName]
+    
+    siteDat <- allData %>% filter(siteID==siteName)
+    siteDat$date <- as.Date(siteDat$date)
+    siteHeights <- unique(siteDat$verticalPosition)
+    dayMet <- download_daymet(site=siteName,
+                              lat=lat,
+                              lon=lon,
+                              start=2014,
+                              end=2021,
+                              internal=TRUE,
+                              simplify=TRUE)
+    dayMet$date <- as.Date((dayMet$yday-1),origin=as.Date(paste0(dayMet$year,"-01-01")))
+    if(varName=='tempSingleMean'){
+      dayMetMax <- dayMet %>% filter(measurement=="tmax..deg.c.")
+      dayMetMax <- dayMetMax %>% dplyr::select(value,date)
+      
+      dayMetMin <- dayMet %>% filter(measurement=="tmin..deg.c.")
+      dayMetMin <- dayMetMin %>% dplyr::select(value,date)
+      dayMet <- merge(dayMetMax,dayMetMin,by="date")
+      if(funName=="mean"){
+        dayMet$dayMetValue <- rowMeans(dayMet[,2:3])
+      }else if(funName=="min"){
+        dayMet$dayMetValue <- dayMet[,3]
+      }else if(funName=="max"){
+        dayMet$dayMetValue <- dayMet[,2]
+      }
+      siteDat$NEON_value <- siteDat$tempSingleMean
+      siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
+      dayMet <- dayMet %>% dplyr::select(-c(value.x,value.y))
+    }
+    allDayMet <- matrix(nrow=0,ncol=ncol(dayMet))
+    for(h in seq_along(siteHeights)){
+      newDayMet <- dayMet
+      newDayMet$verticalPosition <- siteHeights[h]
+      allDayMet <- rbind(allDayMet,newDayMet)
+    }
+    
+    siteDatAll <- merge(allDayMet,siteDat,by=c('date','verticalPosition'),all=TRUE)
+    siteDatAll$siteID <- siteName
+    
+    siteDatAll$week <- floor((lubridate::yday(siteDatAll$date)-0.01)/7)+1
+    siteDatAll <- left_join(siteDatAll,dayMetLRs,by=c('week','verticalPosition','siteID'))
+
+    siteDatAll$NEON_value[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] <- siteDatAll$slope[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] * 
+      siteDatAll$dayMetValue[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] + siteDatAll$intercept[is.na(siteDatAll$NEON_value)|siteDatAll$n<20]
+    siteDatAll <- siteDatAll[,c('siteID','date','verticalPosition','NEON_value')]
+    colnames(siteDatAll)[colnames(siteDatAll)=="NEON_value"] <- paste(varName,funName,sep="_")
+
+    allOutput <- rbind(allOutput,siteDatAll)
+  }
+
+  write.csv(file=paste0(dataPath,dataName,'Dailydata_',funName,'_gapFilled.csv'),allOutput,row.names = FALSE,quote=FALSE)
+}

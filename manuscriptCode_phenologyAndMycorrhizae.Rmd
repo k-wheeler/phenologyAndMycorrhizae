@@ -40,30 +40,33 @@ varName <- 'tempSingleMean'
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=mean,funName="mean")
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=min,funName="min")
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=max,funName="max")
-```
-
-#Triple Air Temperature at Top of Canopy
-```{r,eval=FALSE} 
-##Need to redownload!! 
-dataName="NEON_TopTemperatureData"
-NEON_ID='DP1.00003.001'
-selectColumns <- c('tempTripleMean','finalQF')
-inFileName <- "TAAT_30min.csv"
-varName <- 'tempTripleMean'
-if(!file.exists(paste0(dataPath,"/",dataName))){
-  dir.create(paste0(dataPath,"/",dataName))
+for(funName in c("mean","max","min")){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=mean,funName=funName)
+  #Calculate LRs
+  gapFillFromDayMet_verticalProfiles(dataName=dataName,dataPath=dataPath,varName=varName,funName=funName)
 }
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
-combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
-                inFileName=inFileName,dataPath=dataPath)
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=mean)
-gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
-
 ```
+
+<!-- #Triple Air Temperature at Top of Canopy -->
+<!-- ```{r,eval=FALSE}  -->
+<!-- ##Need to redownload!!  -->
+<!-- dataName="NEON_TopTemperatureData" -->
+<!-- NEON_ID='DP1.00003.001' -->
+<!-- selectColumns <- c('tempTripleMean','finalQF') -->
+<!-- inFileName <- "TAAT_30min.csv" -->
+<!-- varName <- 'tempTripleMean' -->
+<!-- if(!file.exists(paste0(dataPath,"/",dataName))){ -->
+<!--   dir.create(paste0(dataPath,"/",dataName)) -->
+<!-- } -->
+
+<!-- downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) -->
+<!-- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns, -->
+<!--                 inFileName=inFileName,dataPath=dataPath) -->
+<!-- calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=mean) -->
+<!-- gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName) -->
+
+<!-- ``` -->
 
 #Precipitation
 ```{r,eval=FALSE}
@@ -402,7 +405,6 @@ outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 
 ```
-
 
 #NEON PhenoCam Observations
 ```{r,eval=FALSE}
