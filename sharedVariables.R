@@ -8,6 +8,7 @@ library("devtools") #
 library("rhdf5") #
 library(daymetr) #
 library("neonUtilities") #
+library('broom')
 
 #library(inborutils)
 

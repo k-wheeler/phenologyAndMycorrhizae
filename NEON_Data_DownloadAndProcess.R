@@ -54,11 +54,17 @@ combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath,s
   }
 }
 
-calculateDailyWeather <- function(dataName,dataPath,varName,funType){
+calculateDailyWeather <- function(dataName,dataPath,varName,funType,funName){
   inFileName <- paste0(dataName,"ALLdata.csv")
-  outFileName <- paste0(dataName,"Dailydata.csv")
+  outFileName <- paste0(dataName,"Dailydata_",as.character(funName),".csv")
+  print(outFileName)
   allData <- read.csv(file=paste0(dataPath,inFileName))
-  allDaily <- matrix(nrow=0,ncol=3)
+  if(dataName=="NEON_SingleAirTemperature"){
+    allDaily <- matrix(nrow=0,ncol=5)
+  }else{
+    allDaily <- matrix(nrow=0,ncol=4)
+  }
+  
   if("precipQF" %in% colnames(allData)){
     names(allData)[names(allData)=="precipQF"] <- 'finalQF'
   }
@@ -66,12 +72,22 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funType){
     siteName <- NEON_siteNames[s]
     print(siteName)
     allData$oldValue <- allData[,varName]
+    if(dataName=="NEON_SingleAirTemperature"){
+      subDat <- allData %>% filter(siteID==siteName) %>% 
+        filter(finalQF==0 | is.na(finalQF)) %>%
+        mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
+        group_by(date,verticalPosition) %>% mutate(value=funType(oldValue,na.rm=TRUE),n=sum(!is.na(oldValue)))
+      subDat <- data.frame(subDat)
+      subDat <-subDat[,which(names(subDat) %in% c('siteID','date','value','verticalPosition','n'))] %>% distinct()
+    }else{
     subDat <- allData %>% filter(siteID==siteName) %>% 
       filter(finalQF==0 | is.na(finalQF)) %>%
       mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
-      group_by(date) %>% mutate(value=funType(oldValue,na.rm=TRUE))
+      group_by(date) %>% mutate(value=funType(oldValue,na.rm=TRUE),n=n())
     subDat <- data.frame(subDat)
-    subDat <-subDat[,which(names(subDat) %in% c('siteID','date','value'))] %>% distinct()
+    subDat <-subDat[,which(names(subDat) %in% c('siteID','date','value','n'))] %>% distinct()
+    }
+
     allDaily <- rbind(allDaily,subDat)
   }
   names(allDaily)[names(allDaily)=="value"] <- varName
