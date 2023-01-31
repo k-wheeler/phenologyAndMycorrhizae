@@ -59,7 +59,7 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funType,funName){
   outFileName <- paste0(dataName,"Dailydata_",as.character(funName),".csv")
   print(outFileName)
   allData <- read.csv(file=paste0(dataPath,inFileName))
-  if(dataName=="NEON_SingleAirTemperature"){
+  if(dataName=="NEON_SingleAirTemperature" | dataName=="NEON_PAR"){
     allDaily <- matrix(nrow=0,ncol=5)
   }else{
     allDaily <- matrix(nrow=0,ncol=4)
@@ -67,12 +67,14 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funType,funName){
   
   if("precipQF" %in% colnames(allData)){
     names(allData)[names(allData)=="precipQF"] <- 'finalQF'
+  }else if(dataName=="NEON_PAR"){
+    names(allData)[names(allData)=="PARFinalQF"] <- 'finalQF'
   }
   for(s in seq_along(NEON_siteNames)){
     siteName <- NEON_siteNames[s]
     print(siteName)
     allData$oldValue <- allData[,varName]
-    if(dataName=="NEON_SingleAirTemperature"){
+    if(dataName=="NEON_SingleAirTemperature" | dataName=="NEON_PAR"){
       subDat <- allData %>% filter(siteID==siteName) %>% 
         filter(finalQF==0 | is.na(finalQF)) %>%
         mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
