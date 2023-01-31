@@ -13,6 +13,7 @@ NEON_ID='DP1.00041.001'
 
 selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
 inFileName <- "ST_30_minute.csv"
+varName <- 'soilTempMean'
 
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
