@@ -8,26 +8,14 @@
 # for(s in my_fnames){
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
-dataName="NEON_SoilTemp"
-NEON_ID='DP1.00041.001'
 
-selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
-inFileName <- "ST_30_minute.csv"
-varName <- 'soilTempMean'
+dataName="NEON_RH"
+NEON_ID='DP1.00098.001'
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+# selectColumns <- c('verticalPosition','PARMean','PARMinimum','PARMaximum','PARVariance','PARFinalQF')
+# inFileName <- "PARPAR_30min.csv"
+# varName <- "PARMean"
 
-combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
-                inFileName=inFileName,dataPath=dataPath)
-
-funType=mean
-funName="mean"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=min
-funName="min"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=max
-funName="max"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack = FALSE)
