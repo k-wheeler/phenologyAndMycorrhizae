@@ -11,8 +11,8 @@ source('NEON_Data_DownloadAndProcess.R')
 
 dataName="NEON_RH"
 NEON_ID='DP1.00098.001'
-dataName="NEON_Windspeed"
-NEON_ID='DP1.00001.001'
+#dataName="NEON_Windspeed"
+#NEON_ID='DP1.00001.001'
 
 selectColumns <- c('verticalPosition','RHMean','RHMinimum','RHMaximum','RHVariance','dewTempMean',
                    'RHFinalQF','dewTempFinalQF')
