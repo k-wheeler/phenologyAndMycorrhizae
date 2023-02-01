@@ -160,7 +160,7 @@ gapFillFromDaymet <- function(dataName,dataPath,varName){
 
 gapFillFromDayMet_verticalProfiles <- function(dataName,dataPath,varName,funName){
   allData <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character(funName),".csv"))
-  dayMetLRs <- read.csv(paste0(dataName,"towerHeight_LRfitsWithDayMet_",summaryStat,".csv"))
+  dayMetLRs <- read.csv(paste0(dataName,"towerHeight_LRfitsWithDayMet_",as.character(funName),".csv"))
   dayMetLRs <- dayMetLRs %>% dplyr::select(siteID,week,verticalPosition,term,estimate)
   dayMetLRs <- pivot_wider(dayMetLRs,names_from = term,values_from = estimate)
   colnames(dayMetLRs) <- c("siteID","week","verticalPosition","intercept","slope")

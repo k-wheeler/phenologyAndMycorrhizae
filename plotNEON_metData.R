@@ -8,6 +8,7 @@ varNames <- c("tempSingleMean","precipBulk","PARMean","RHMean","windSpeedMean","
 pdf('NEON_metData.pdf',height=5,width=12)
 for(i in seq_along(dataNames)){
   dataName <- dataNames[i]
+  print(dataName)
   varName <- varNames[i]
   if(dataName=="NEON_SingleAirTemperature"){
     meanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_mean_gapFilled.csv"),header=TRUE)
@@ -21,13 +22,22 @@ for(i in seq_along(dataNames)){
   for(s in seq_along(NEON_siteNames)){
     siteName <- NEON_siteNames[s]
     siteMeanDat <- meanDat %>% filter(siteID==siteName)
-    colnames(siteMeanDat)[4] <- "value"
-    ggplot(siteMeanDat,aes(x=as.Date(date),y=value,col=verticalPosition)) +
-      geom_point()+
-      theme_classic()+
-      ggtitle(siteName)+
-      xlab("Date")+
-      ylab(dataName)
+    if(dataName=="NEON_PrecipitationData"){
+      print(ggplot(siteMeanDat,aes(x=as.Date(date),y=precipBulk)) +
+        geom_point()+
+        theme_classic()+
+        ggtitle(siteName)+
+        xlab("Date")+
+        ylab(dataName))
+    }else{
+      colnames(siteMeanDat)[4] <- "value"
+      print(ggplot(siteMeanDat,aes(x=as.Date(date),y=value,col=verticalPosition)) +
+        geom_point()+
+        theme_classic()+
+        ggtitle(siteName)+
+        xlab("Date")+
+        ylab(dataName))
+    }
     
   }
 }
