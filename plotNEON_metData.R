@@ -1,4 +1,7 @@
 #Plot Data
+source('sharedVariables.R')
+source('NEON_Data_DownloadAndProcess.R')
+
 dataNames <- c("NEON_SingleAirTemperature","NEON_PrecipitationData","NEON_PAR",
                "NEON_relativeHumidity","NEON_Windspeed","NEON_SoilTemp")
 varNames <- c("tempSingleMean","precipBulk","PARMean","RHMean","windSpeedMean","soilTempMean")
