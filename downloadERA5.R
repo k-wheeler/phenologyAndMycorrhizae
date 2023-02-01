@@ -30,7 +30,7 @@ for(s in seq_along(NEON_siteNames)){
   siteID <- NEON_siteNames[s]
   print(siteID)
   lat <- siteData$field_latitude[siteData$field_site_id==siteID]
-  lon <- siteData$field_longitude[siteData$field_site_id==siteID]
+  long <- siteData$field_longitude[siteData$field_site_id==siteID]
   area <- rep(round(c(lat, long) * 4) / 4, 2)
   
   
