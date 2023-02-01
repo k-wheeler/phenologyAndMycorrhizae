@@ -69,6 +69,10 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funType,funName){
     names(allData)[names(allData)=="precipQF"] <- 'finalQF'
   }else if(dataName=="NEON_PAR"){
     names(allData)[names(allData)=="PARFinalQF"] <- 'finalQF'
+  }else if(dataName=="NEON_relativeHumidity"){
+    names(allData)[names(allData)=="RHFinalQF"] <- 'finalQF'
+  }else if(dataName=="NEON_Windspeed"){
+    names(allData)[names(allData)=="windSpeedFinalQF"] <- 'finalQF'
   }
   for(s in seq_along(NEON_siteNames)){
     siteName <- NEON_siteNames[s]
