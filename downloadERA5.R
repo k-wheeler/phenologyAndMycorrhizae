@@ -28,7 +28,7 @@ var <- variables[["api_name"]][[1]] #Only include the first variable
 
 for(s in seq_along(NEON_siteNames)){
   siteID <- NEON_siteNames[s]
-  print(siteName)
+  print(siteID)
   lat <- siteData$field_latitude[siteData$field_site_id==siteName]
   lon <- siteData$field_longitude[siteData$field_site_id==siteName]
   area <- rep(round(c(lat, long) * 4) / 4, 2)
