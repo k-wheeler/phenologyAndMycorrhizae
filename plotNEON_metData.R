@@ -6,7 +6,13 @@ pdf('NEON_metData.pdf',height=5,width=12)
 for(i in seq_along(dataNames)){
   dataName <- dataNames[i]
   varName <- varNames[i]
-  meanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_mean_gapFilled.csv"),header=TRUE)
+  if(dataName=="NEON_SingleAirTemperature"){
+    meanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_mean_gapFilled.csv"),header=TRUE)
+  }else if(dataName=="NEON_PrecipitationData"){
+    meanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_gapFilled.csv"),header=TRUE)
+  }else{
+    meanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_mean.csv"),header=TRUE)
+  }
   # minDat <- read.csv(paste0(dataPath,dataName,"Dailydata_min_gapFilled.csv"), header=TRUE)
   # maxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_max_gapFilled.csv"), header=TRUE)
   for(s in seq_along(NEON_siteNames)){
