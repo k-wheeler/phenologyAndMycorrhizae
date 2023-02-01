@@ -157,17 +157,17 @@ varName <- "windSpeedMean"
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
-# funType=mean
-# funName="mean"
-# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-# 
-# funType=min
-# funName="min"
-# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-# 
-# funType=max
-# funName="max"
-# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+funType=mean
+funName="mean"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+
+funType=min
+funName="min"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+
+funType=max
+funName="max"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
 
 ```
 

@@ -9,19 +9,18 @@
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 
-dataName="NEON_relativeHumidity"
-NEON_ID='DP1.00098.001'
-# dataName="NEON_Windspeed"
-# NEON_ID='DP1.00001.001'
+dataName="NEON_Windspeed"
+NEON_ID='DP1.00001.001'
+# if(!file.exists(paste0(dataPath,"/",dataName))){
+#   dir.create(paste0(dataPath,"/",dataName))
+# }
+selectColumns <- c('verticalPosition','windSpeedMean','windSpeedMinimum','windSpeedMaximum','windSpeedFinalQF')
+inFileName <- "2DWSD_30min.csv"
+varName <- "windSpeedMean"
 
-selectColumns <- c('verticalPosition','RHMean','RHMinimum','RHMaximum','RHVariance','dewTempMean',
-                   'RHFinalQF','dewTempFinalQF')
-inFileName <- "RH_30min.csv"
-varName <- "RHMean"
-
+# downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 # combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
 #                 inFileName=inFileName,dataPath=dataPath)
-
 funType=mean
 funName="mean"
 calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
@@ -33,4 +32,3 @@ calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funTyp
 funType=max
 funName="max"
 calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
