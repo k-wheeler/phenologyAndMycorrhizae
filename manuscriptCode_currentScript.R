@@ -19,19 +19,18 @@ selectColumns <- c('verticalPosition','RHMean','RHMinimum','RHMaximum','RHVarian
 inFileName <- "RH_30min.csv"
 varName <- "RHMean"
 
-# 
-# if(!file.exists(paste0(dataPath,"/",dataName))){
-#   dir.create(paste0(dataPath,"/",dataName))
-# }
+# combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+#                 inFileName=inFileName,dataPath=dataPath)
 
-combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
-                inFileName=inFileName,dataPath=dataPath)
+funType=mean
+funName="mean"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
 
-#downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack = FALSE)
+funType=min
+funName="min"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
 
-# IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
-# for(s in seq_along(NEON_siteNames)){
-#   print(s)
-#   savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
-#   stackByTable(paste0(savePath,'/filesToStack',IDnum))
-# }
+funType=max
+funName="max"
+calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+
