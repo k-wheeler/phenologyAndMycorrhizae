@@ -21,4 +21,11 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
 # inFileName <- "PARPAR_30min.csv"
 # varName <- "PARMean"
 
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack = FALSE)
+#downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack = FALSE)
+
+IDnum <- strsplit(NEON_ID,"[.]")[[1]][2]
+for(s in seq_along(NEON_siteNames)){
+  print(s)
+  savePath <- paste0(dataPath,dataName,'/',NEON_siteNames[s])
+  stackByTable(paste0(savePath,'/filesToStack',IDnum))
+}
