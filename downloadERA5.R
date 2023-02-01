@@ -5,11 +5,11 @@ library("reticulate")
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 
-cdsapi <- reticulate::import_from_path("cdsapi",path="./.conda/envs/myR_new2/lib/python3.11/site-packages")
+cdsapi <- reticulate::import_from_path("cdsapi",path="~/.conda/envs/myR_new2/lib/python3.11/site-packages")
 cclient <- cdsapi$Client()
 
 start_date <- as.Date("2022-01-01")
-end_date <- as.Date("2022-12-31")
+end_date <- as.Date("2022-01-31")
 
 variables <- tibble::tribble(
   ~cf_name, ~units, ~api_name, ~ncdf_name,
