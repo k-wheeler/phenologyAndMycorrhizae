@@ -140,6 +140,35 @@ downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 
 ```
 
+#Download Windspeed
+```{r}
+dataName="NEON_Windspeed"
+NEON_ID='DP1.00001.001'
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+# selectColumns <- c('verticalPosition','PARMean','PARMinimum','PARMaximum','PARVariance','PARFinalQF')
+# inFileName <- "PARPAR_30min.csv"
+# varName <- "PARMean"
+
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+# combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+#                 inFileName=inFileName,dataPath=dataPath)
+# funType=mean
+# funName="mean"
+# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+# 
+# funType=min
+# funName="min"
+# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+# 
+# funType=max
+# funName="max"
+# calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+
+```
+
+
 #Download NEON Soil Microbe Data
 ```{r,eval=FALSE}
 dataName="NEON_SoilMicrobeComposition"
