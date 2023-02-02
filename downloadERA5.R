@@ -8,7 +8,7 @@ source('NEON_Data_DownloadAndProcess.R')
 cdsapi <- reticulate::import_from_path("cdsapi",path="~/.conda/envs/myR_new2/lib/python3.11/site-packages")
 cclient <- cdsapi$Client()
 
-start_date <- as.Date("2022-01-01")
+start_date <- as.Date("2014-01-01")
 end_date <- as.Date("2022-01-31")
 
 variables <- tibble::tribble(
@@ -20,11 +20,18 @@ variables <- tibble::tribble(
   "eastward_wind", "m/s", "10m_u_component_of_wind", NA_character_,
   "northward_wind", "m/s", "10m_v_component_of_wind", NA_character_,
   "surface_downwelling_shortwave_flux_in_air", "W/m2", "surface_solar_radiation_downwards", NA_character_,
-  "surface_downwelling_longwave_flux_in_air", "W/m2", "surface_thermal_radiation_downwards", NA_character_
-  
+  "surface_downwelling_longwave_flux_in_air", "W/m2", "surface_thermal_radiation_downwards", NA_character_,
+  "soil_temperature_level_1","Kelvin","soil_temperature_level_1",NA_character_,
+  "soil_temperature_level_2","Kelvin","soil_temperature_level_2",NA_character_,
+  "soil_temperature_level_3","Kelvin","soil_temperature_level_3",NA_character_,
+  "soil_temperature_level_4","Kelvin","soil_temperature_level_4",NA_character_,
+  'volumetric_soil_water_layer_1','m3/m3','volumetric_soil_water_layer_1',NA_character_,
+  'volumetric_soil_water_layer_2','m3/m3','volumetric_soil_water_layer_2',NA_character_,
+  'volumetric_soil_water_layer_3','m3/m3','volumetric_soil_water_layer_3',NA_character_,
+  'volumetric_soil_water_layer_4','m3/m3','volumetric_soil_water_layer_4',NA_character_
 ) #Some examples (see more at: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
 
-var <- variables[["api_name"]][[1]] #Only include the first variable
+var <- variables[["api_name"]]
 
 for(s in seq_along(NEON_siteNames)){
   siteID <- NEON_siteNames[s]
@@ -33,8 +40,7 @@ for(s in seq_along(NEON_siteNames)){
   long <- siteData$field_longitude[siteData$field_site_id==siteID]
   area <- rep(round(c(lat, long) * 4) / 4, 2)
   
-  
-  fileName <- paste0(dataPath,'ERA5/',siteID,"_",start_date,"_",end_date,"_era5AirTemperatureMembers.nc")
+  fileName <- paste0(dataPath,'ERA5/',siteID,"_",start_date,"_",end_date,"_era5Members.nc")
   print(fileName)
   do_next <- tryCatch({
     cclient$retrieve(
