@@ -27,6 +27,8 @@ combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath,s
         subDat <- read.csv(paste0(dataPath,dataName,"/",NEON_siteNames[s],'/filesToStack',IDnum,'/stackedFiles/',inFileName))
         if(dataName%in%c("NEON_soilProperties","NEON_Roots","NEON_litterfall","NEON_plantFoliarTraits")){
           allData <- rbind(allData,subDat[,c('siteID','collectDate',selectColumns)])
+        }else if(dataName=="NEON_vegetation_structure"){
+          allData <- rbind(allData,subDat[,c('siteID','date',selectColumns)])
         }else{
           allData <- rbind(allData,subDat[,c('siteID','startDateTime',selectColumns)])
         }
