@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
+downloadData=FALSE #Change to true if you need to download data 
 ```
 
 Download NEON Data
@@ -23,7 +24,9 @@ source('combineNEONdata_PhenoObs.R')
 dataName="NEON_PhenologyObservations"
 NEON_ID='DP1.10055.001'
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
 combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
 combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
@@ -36,8 +39,9 @@ NEON_ID='DP1.00002.001'
 selectColumns <- c('horizontalPosition','verticalPosition','tempSingleMean','tempSingleExpUncert','finalQF')
 inFileName <- "SAAT_30min.csv"
 varName <- 'tempSingleMean'
-
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 for(funName in c("mean","max","min")){
@@ -68,18 +72,20 @@ for(funName in c("mean","max","min")){
 
 <!-- ``` -->
 
-#Precipitation
+#NEON Precipitation
 ```{r,eval=FALSE}
 dataName="NEON_PrecipitationData"
 NEON_ID='DP1.00006.001'
 selectColumns <- c('precipBulk','precipExpUncert','precipQF')
 inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
 varName <- "precipBulk"
-
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=sum)
+
 gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
 
 ```
@@ -95,7 +101,9 @@ selectColumns <- c('verticalPosition','PARMean','PARMinimum','PARMaximum','PARVa
 inFileName <- "PARPAR_30min.csv"
 varName <- "PARMean"
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 funType=mean
@@ -124,7 +132,9 @@ selectColumns <- c('verticalPosition','RHMean','RHMinimum','RHMaximum','RHVarian
 inFileName <- "RH_30min.csv"
 varName <- "RHMean"
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
@@ -154,7 +164,9 @@ selectColumns <- c('verticalPosition','windSpeedMean','windSpeedMinimum','windSp
 inFileName <- "2DWSD_30min.csv"
 varName <- "windSpeedMean"
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 funType=mean
@@ -179,7 +191,9 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
+}
 
 selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
 inFileName <- "ST_30_minute.csv"
@@ -210,8 +224,9 @@ NEON_ID='DP1.10081.001'
 #selectColumns <-
 inFileName <- c("mcc_soilSeqVariantMetadata_16S.csv","mcc_soilSeqVariantMetadata_ITS.csv")
 #varName <- 
-
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #Note: I had to modify this function to remove the indices for sites that didn't seem to have data. 
+}
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 ```
@@ -223,8 +238,9 @@ NEON_ID <- "DP1.10086.001"
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
-
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 
 inFileName <- "sls_soilCoreCollection.csv"
 selectColumns <- c('plotID','decimalLatitude','decimalLongitude','elevation','standingWaterDepth','horizon',
@@ -232,30 +248,30 @@ selectColumns <- c('plotID','decimalLatitude','decimalLongitude','elevation','st
 dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
-dat1 <- dat1 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
-  group_by(siteID,collectDate,plotID,decimalLatitude,decimalLongitude,elevation,horizon) %>% 
+dat1 <- dat1 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% 
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year,decimalLatitude,decimalLongitude,elevation,horizon) %>% 
   summarise(soilTemp=mean(soilTemp),litterDepth=mean(litterDepth))
-
-
 
 inFileName <- "sls_soilpH.csv"
 selectColumns <- c('plotID','horizon','soilInWaterpH','soilInCaClpH')
 dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath,saveFile = FALSE) 
 
-dat2 <- dat2 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% group_by(siteID,collectDate,plotID,horizon) %>%
+dat2 <- dat2 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% 
+  mutate(year=lubridate::year(collectDate)) %>% group_by(siteID,year,horizon) %>%
   summarise(soilInWaterpH=mean(soilInWaterpH),soilInWaterpH=mean(soilInWaterpH))
 
-
-allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','plotID','horizon'))
+allDat <- full_join(dat1,dat2,by=c('siteID','year','horizon'))
 
 inFileName <- "sls_soilMoisture.csv"
 selectColumns <- c('plotID','horizon','soilMoisture','dryMassFraction')
 dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
-dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d"))%>% group_by(siteID,collectDate,plotID,horizon) %>%
+dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% 
+  mutate(year=lubridate::year(collectDate)) %>% group_by(siteID,year,horizon) %>%
   summarise(soilMoisture=mean(soilMoisture),dryMassFraction=mean(dryMassFraction)) 
-allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID','horizon'))
+allDat <- full_join(allDat,dat3,by=c('siteID','year','horizon'))
 
 outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
@@ -269,8 +285,9 @@ NEON_ID='DP1.10067.001'
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
-
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
+}
 
 inFileName <- 'bbc_dilution.csv'
 selectColumns <- c('plotID','sampleVolume',
@@ -280,8 +297,9 @@ dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                        selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 dat1 <- dat1 %>% mutate(density=dryMass/sampleVolume,
                         somDensity=somDryMass/sampleVolume) %>%
-  dplyr::select(-c(sampleVolume,dryMass,somDryMass)) %>%
-  group_by(siteID,collectDate,plotID) %>% summarise(densityMean=mean(density),somDensityMean=mean(somDensity))
+  dplyr::select(-c(sampleVolume,dryMass,somDryMass)) %>% 
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year) %>% summarise(densityMean=mean(density),somDensityMean=mean(somDensity))
 
 
 inFileName <- 'bbc_percore.csv'
@@ -291,10 +309,11 @@ selectColumns <- c('plotID','decimalLatitude','decimalLongitude',
 dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                        selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
-dat2 <- dat2 %>% group_by(siteID,collectDate,plotID) %>%
+dat2 <- dat2  %>% 
+  mutate(year=lubridate::year(collectDate)) %>% group_by(siteID,year) %>%
   summarise(litterDepth=mean(litterDepth))
 
-allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','plotID'))
+allDat <- full_join(dat1,dat2,by=c('siteID','year'))
 
 inFileName <- 'bbc_rootChemistry.csv'
 selectColumns <- c('plotID','plotType',
@@ -304,9 +323,10 @@ selectColumns <- c('plotID','plotType',
 dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                        selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE) 
 
-dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
+dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d"))%>% 
+  mutate(year=lubridate::year(collectDate)) %>%
   filter(cnIsotopeQF=="OK",cnPercentQF=="OK") %>%
-  group_by(siteID,collectDate,plotID) %>% summarise(d15N=mean(d15N),
+  group_by(siteID,year) %>% summarise(d15N=mean(d15N),
                                                     d13C=mean(d13C),
                                                     nitrogenPercent=
                                                       mean(nitrogenPercent),
@@ -315,7 +335,7 @@ dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,              
                                                     CNratio=
                                                       mean(CNratio))
   
-allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','plotID'))
+allDat <- full_join(allDat,dat3,by=c('siteID','year'))
 
 inFileName <- "bbc_rootmass.csv"
 selectColumns <- c('plotID','dryMass','mycorrhizaeVisible') 
@@ -327,18 +347,62 @@ dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible=="N"] <- 0
 dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible=="Y"] <- 1
 dat4$mycorrhizaeVisible[dat4$mycorrhizaeVisible==""] <- NA
 
-dat4 <- dat4 %>% group_by(siteID,collectDate,plotID) %>%
+dat4 <- dat4 %>% 
+  mutate(year=lubridate::year(collectDate)) %>% group_by(siteID,year) %>%
   summarise(rootDryMass=mean(rootDryMass),
             mycorrhizaeVisiblePercent=mean(as.numeric(mycorrhizaeVisible),na.rm=TRUE))
 
+allDat <- full_join(allDat,dat4,by=c('siteID','year'))
 
-allDat <- full_join(allDat,dat4,by=c('siteID','collectDate','plotID'))
 outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 ```
 
 #NEON Plant Structural Characteristics
 ```{r}
+dataName="NEON_vegetation_structure"
+NEON_ID="DP1.10098.001"
+
+if(!file.exists(paste0(dataPath,"/",dataName))){
+  dir.create(paste0(dataPath,"/",dataName))
+}
+if(downloadData){
+downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,includedSeq=42:47) #No: 2, 18,26, 38, 41
+}
+
+inFileName <- 'vst_apparentindividual.csv'
+selectColumns <- c('plotID','individualID','growthForm','plantStatus',
+                   'stemDiameter','measurementHeight','height',
+                   'baseCrownHeight','maxCrownDiameter','canopyPosition')
+dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                        selectColumns=selectColumns, inFileName=inFileName,
+                        dataPath=dataPath, saveFile = FALSE)
+dat1 <- dat1 %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date)
+
+inFileName <- 'vst_non-woody.csv'
+selectColumns <- c('plotID','individualID','growthForm','plantStatus',
+                   'stemDiameter','measurementHeight','height',
+                   'baseCrownHeight','maxCrownDiameter','canopyPosition',
+                   'scientificName')
+dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                        selectColumns=selectColumns, inFileName=inFileName,
+                        dataPath=dataPath, saveFile = FALSE)
+dat2 <- dat2 %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date)
+
+inFileName <- 'vst_mappingandtagging.csv'
+selectColumns <- c('plotID','individualID','scientificName')
+dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
+                        selectColumns=selectColumns, inFileName=inFileName,
+                        dataPath=dataPath, saveFile = FALSE)
+dat3 <- dat3 %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date)
+allDat <- full_join(dat2,dat3,by=c('siteID','year','individualID','scientificName'))
+
+allDat <- full_join(allDat,dat1,by=c('siteID','year','individualID',
+                                   'growthForm','plantStatus',
+                                   'stemDiameter','measurementHeight','height',
+                                   'baseCrownHeight','maxCrownDiameter','canopyPosition'))
+outFileName <- paste0(dataName,"ALLdata.csv")
+write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 
 ```
 
@@ -350,7 +414,9 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+}
 
 inFileName <- "ltr_litterCarbonNitrogen.csv"
   
@@ -361,7 +427,8 @@ dat1 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
 dat1 <- dat1 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
-  group_by(siteID,collectDate,plotID,plotType,setDate) %>%
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year,plotType,setDate) %>%
   summarise(d15N=mean(d15N), d13C=mean(d13C),nitrogenPercent=mean(nitrogenPercent),
             carbonPercent=mean(carbonPercent), CNratio=mean(CNratio))
 
@@ -373,11 +440,12 @@ dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
 dat2 <- dat2 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
-  group_by(siteID,collectDate,plotID,setDate) %>%
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year,setDate) %>%
   summarise(ligninPercent=mean(ligninPercent),
             cellulosePercent=mean(cellulosePercent))
 
-allDat <- full_join(dat1,dat2,by=c('siteID','plotID','setDate'))
+allDat <- full_join(dat1,dat2,by=c('siteID','year'))
 
 inFileName <- "ltr_massdata.csv"
 selectColumns <- c('plotID','setDate','functionalGroup',
@@ -386,14 +454,14 @@ selectColumns <- c('plotID','setDate','functionalGroup',
 dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 dat3 <- dat3 %>%
-  group_by(siteID,collectDate,plotID,setDate,functionalGroup) %>%
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year,setDate,functionalGroup) %>%
   summarise(dryMass=mean(dryMass))
 
-allDat <- full_join(allDat,dat3,by=c('siteID','plotID','setDate'))
+allDat <- full_join(allDat,dat3,by=c('siteID','year'))
 
 outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
-
 ```
 
 #NEON Foliar Traits
@@ -405,7 +473,9 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
+if(downloadData){
 downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
+}
 
 inFileName <- "cfc_LMA.csv"
 selectColumns <- c('sampleID','plotType','percentGreen','leafMassPerArea','dryMassFraction')
@@ -421,11 +491,6 @@ dat2 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
 inFileName <- "cfc_chlorophyll.csv"
-# selectColumns <- c('plotID','chlCarotWavelength1'),'chlCarotWavelength2',
-#                    'chlCarotWavelength3','chlCarotWavelength4',
-#                    'chlCarotWavelength1Abs','chlCarotWavelength2Abs',
-#                    'chlCarotWavelength3Abs','chlCarotWavelength4Abs',
-#                    'extractChlAConc','extractChlBConc')
 selectColumns <- c('plotID','extractChlAConc','extractChlBConc','extractCarotConc','sampleID')
 
 dat3 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
@@ -446,11 +511,6 @@ selectColumns <- c('plotID','sampleID','plotType','ligninPercent','cellulosePerc
 dat5 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,
                         selectColumns=selectColumns, inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 
-allDat <- full_join(dat1,dat2,by=c('siteID','collectDate','sampleID','plotType'))
-allDat <- full_join(allDat,dat3,by=c('siteID','collectDate','sampleID','plotID'))
-allDat <- full_join(allDat,dat4,by=c('siteID','collectDate','sampleID','plotID'))
-allDat <- full_join(allDat,dat5,by=c('siteID','collectDate','sampleID','plotID','plotType'))
-##
 allDat <- full_join(dat2,dat3,by=c('siteID','plotID','collectDate','sampleID'))
 allDat <- full_join(allDat,dat4,by=c('siteID','plotID','collectDate','sampleID'))
 allDat <- full_join(allDat,dat5,by=c('siteID','plotID','collectDate','sampleID','plotType'))
@@ -458,7 +518,8 @@ allDat <- full_join(allDat,dat1,by=c('siteID','collectDate','sampleID','plotType
 
 allDat <- allDat %>% dplyr::select(-sampleID) %>%
   mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>%
-  group_by(siteID,collectDate,plotID,plotType) %>%
+  mutate(year=lubridate::year(collectDate)) %>%
+  group_by(siteID,year,plotType) %>%
   summarise(percentGreen=mean(percentGreen),leafMassPerArea=mean(leafMassPerArea),
             dryMassFraction=mean(dryMassFraction),
             d15N=mean(d15N),
