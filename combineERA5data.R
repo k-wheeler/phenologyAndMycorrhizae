@@ -1,8 +1,3 @@
-library('devtools')
-library('ncdf4')
-library("reticulate")
-library(data.table)
-
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 

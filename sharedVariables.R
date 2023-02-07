@@ -9,6 +9,10 @@ library("rhdf5") #
 library(daymetr) #
 library("neonUtilities") #
 library('broom')
+library(data.table)
+library('devtools')
+library('ncdf4')
+library("reticulate")
 
 #library(inborutils)
 
