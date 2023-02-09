@@ -10,9 +10,8 @@ print("loaded PhenoDat")
 #NEON Soil Physical and Chemical Properties ----
 dataName <- "NEON_soilProperties"
 outFileName <- paste0(dataName,"ALLdata.csv")
-soilPropDat <- read.csv(file=paste0(dataPath,outFileName)) %>% filter(horizon!="")
-soilPropDat <- pivot_wider(soilPropDat,names_from=6,values_from=7:11) %>%
-  dplyr::select(-decimalLatitude,decimalLongitude,elevation)
+soilPropDat <- read.csv(file=paste0(dataPath,outFileName))
+soilPropDat <- soilPropDat %>% dplyr::select(-c(decimalLatitude,decimalLongitude,elevation))
 
 allComDat <- left_join(phenoDat,soilPropDat,by=c('siteID','year'))
 print("loaded soilProp")

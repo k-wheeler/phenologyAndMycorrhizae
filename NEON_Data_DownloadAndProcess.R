@@ -113,25 +113,6 @@ calculateCDD <- function(values){
   return(sum(offsets[offsets>0]))
 }
 
-calculateWeeklyWeather <- function(X,phenoRow,dataName,dat){
-    weekDat <- dat %>% filter(siteID==phenoRow[1],as.Date(date)%in%seq((as.Date(as.character(phenoRow[3]))-X*7-6),
-                                                                (as.Date(as.character(phenoRow[3]))-X*7),by="day"))
-    if(dataName%in%c('NEON_SingleAirTemperature')){
-      weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean),
-                                                                      CDD=calculateCDD(tempSingleMean)) %>%
-        mutate(week=X)
-    }
-    return(weekDat)
-}
-calculateAllWeeklyWeather <- function(X,dataName,dat,nWeeks){
-  allWeekDatList <- lapply(X=(0:(nWeeks-1)),FUN=calculateWeeklyWeather,phenoRow=X,dataName=dataName,dat=dat)
-  allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
-  if(dataName%in%c('NEON_SingleAirTemperature')){
-    allWeeks <- pivot_wider(allWeeks,names_from=c(1,4),values_from=2:3)
-  }
-  return(allWeeks)
-}
-
 gapFillFromDaymet <- function(dataName,dataPath,varName){
   allData <- read.csv(paste0(dataPath,dataName,'Dailydata.csv'))
   allOutput <- matrix(nrow=0,ncol=3)

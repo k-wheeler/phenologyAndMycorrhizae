@@ -13,26 +13,27 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
+source('computeWeeklyMetData.R')
 downloadData=FALSE #Change to true if you need to download data 
 ```
 
-Download NEON Data
+#Download and Process Individual NEON Data Products
 
-#NEON Phenology Observations 
+##NEON Phenology Observations 
 ```{r,eval=FALSE}
 source('combineNEONdata_PhenoObs.R')
 dataName="NEON_PhenologyObservations"
 NEON_ID='DP1.10055.001'
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
 combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
 combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
 ```
 
-#Single Air Temperature At Various Heights 
+##NEON Single Air Temperature At Various Heights 
 ```{r,eval=FALSE}
 dataName="NEON_SingleAirTemperature"
 NEON_ID='DP1.00002.001'
@@ -40,15 +41,16 @@ selectColumns <- c('horizontalPosition','verticalPosition','tempSingleMean','tem
 inFileName <- "SAAT_30min.csv"
 varName <- 'tempSingleMean'
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
-for(funName in c("mean","max","min")){
-  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=mean,funName=funName)
+
+for(f in seq_along(funTypes)){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funTypes[f],funName=funNames[f])
   #Calculate LRs
-  gapFillFromDayMet_verticalProfiles(dataName=dataName,dataPath=dataPath,varName=varName,funName=funName)
-}
+  # gapFillFromDayMet_verticalProfiles(dataName=dataName,dataPath=dataPath,varName=varName,funName=funName)
+} #****Need to rerun 
 
 ```
 
@@ -72,7 +74,7 @@ for(funName in c("mean","max","min")){
 
 <!-- ``` -->
 
-#NEON Precipitation
+##NEON Precipitation
 ```{r,eval=FALSE}
 dataName="NEON_PrecipitationData"
 NEON_ID='DP1.00006.001'
@@ -80,17 +82,17 @@ selectColumns <- c('precipBulk','precipExpUncert','precipQF')
 inFileName <- c("PRIPRE_30min.csv","SECPRE_30min.csv")
 varName <- "precipBulk"
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=sum)
 
-gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
+#gapFillFromDaymet(dataName=dataName,dataPath=dataPath,varName=varName)
 
 ```
 
-#Download Photosynthetically active radiation (PAR)
+##NEON Photosynthetically active radiation (PAR)
 ```{r}
 dataName="NEON_PAR"
 NEON_ID='DP1.00024.001'
@@ -102,25 +104,18 @@ inFileName <- "PARPAR_30min.csv"
 varName <- "PARMean"
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
-funType=mean
-funName="mean"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
 
-funType=min
-funName="min"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=max
-funName="max"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
+for(f in seq_along(funTypes)){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funTypes[f],funName=funNames[f])
+}
 
 ```
 
-#Download Relative Humidity
+##NEON Relative Humidity
 ```{r}
 dataName="NEON_relativeHumidity"
 NEON_ID='DP1.00098.001'
@@ -133,27 +128,18 @@ inFileName <- "RH_30min.csv"
 varName <- "RHMean"
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 
-funType=mean
-funName="mean"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=min
-funName="min"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=max
-funName="max"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
+for(f in seq_along(funTypes)){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType[f],funName=funName[f])
+}
 ```
 
-#Download Windspeed
+##NEON Windspeed
 ```{r}
 dataName="NEON_Windspeed"
 NEON_ID='DP1.00001.001'
@@ -165,25 +151,17 @@ inFileName <- "2DWSD_30min.csv"
 varName <- "windSpeedMean"
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
-funType=mean
-funName="mean"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
 
-funType=min
-funName="min"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=max
-funName="max"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
+for(f in seq_along(funTypes)){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funTypes[f],funName=funNames[f])
+}
 ```
 
-#Download Soil Temp
+##NEON Soil Temp
 ```{r}
 dataName="NEON_SoilTemp"
 NEON_ID='DP1.00041.001'
@@ -192,7 +170,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
 }
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,andStack=FALSE) #missing 30 
 }
 
 selectColumns <- c('horizontalPosition','verticalPosition','soilTempMean','soilTempMinimum','soilTempMaximum','finalQF')
@@ -202,22 +180,13 @@ varName <- 'soilTempMean'
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 
-funType=mean
-funName="mean"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=min
-funName="min"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
-funType=max
-funName="max"
-calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funType,funName=funName)
-
+for(f in seq_along(funTypes)){
+  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funType=funTypes[f],funName=funNames[f])
+}
 ```
 
 
-#Download NEON Soil Microbe Data
+##NEON Soil Microbe Data
 ```{r,eval=FALSE}
 dataName="NEON_SoilMicrobeComposition"
 NEON_ID='DP1.10081.001'
@@ -225,21 +194,21 @@ NEON_ID='DP1.10081.001'
 inFileName <- c("mcc_soilSeqVariantMetadata_16S.csv","mcc_soilSeqVariantMetadata_ITS.csv")
 #varName <- 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #Note: I had to modify this function to remove the indices for sites that didn't seem to have data. 
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #Note: I had to modify this function to remove the indices for sites that didn't seem to have data. 
 }
 combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 ```
 
-#Download NEON Soil Physical and Chemical Properties
-```{r,eval=FALSE}
+##NEON Soil Physical and Chemical Properties
+```{r}
 dataName <- "NEON_soilProperties"
 NEON_ID <- "DP1.10086.001"
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 
 inFileName <- "sls_soilCoreCollection.csv"
@@ -273,12 +242,28 @@ dat3 <- dat3 %>% mutate(collectDate=format(as.POSIXct(collectDate,              
   summarise(soilMoisture=mean(soilMoisture),dryMassFraction=mean(dryMassFraction)) 
 allDat <- full_join(allDat,dat3,by=c('siteID','year','horizon'))
 
+allDat %>% filter(horizon!="")
+allDat <- pivot_wider(allDat,names_from=6,values_from=7:11)
+
+##Still need to run:
+inFileName <- "sls_soilChemistry.csv"
+selectColumns <- c('plotID','d15N','organicd13C','nitrogenPercent','organicCPercent',
+                   'CNratio')
+dat4 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
+                inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
+dat4 <- dat4 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% 
+  mutate(year=lubridate::year(collectDate)) %>% group_by(siteID,year) %>%
+  summarise(d15N=mean(d15N),organicd13C=mean(organicd13C),
+            nitrogenPercent=mean(nitrogenPercent),organicCPercent=mean(organicCPercent),
+            CNratio=mean(CNratio)) 
+allDat <- full_join(allDat,dat4,by=c('siteID','year'))
+
 outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 ```
 
-#NEON Root Characteristics
-```{r, eval=FALSE}
+##NEON Root Characteristics
+```{r}
 dataName="NEON_Roots"
 NEON_ID='DP1.10067.001'
 
@@ -286,7 +271,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
 }
 
 inFileName <- 'bbc_dilution.csv'
@@ -358,7 +343,7 @@ outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 ```
 
-#NEON Plant Structural Characteristics
+##NEON Plant Structural Characteristics
 ```{r}
 dataName="NEON_vegetation_structure"
 NEON_ID="DP1.10098.001"
@@ -367,7 +352,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,includedSeq=42:47) #No: 2, 18,26, 38, 41
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,includedSeq=42:47) #No: 2, 18,26, 38, 41
 }
 
 inFileName <- 'vst_apparentindividual.csv'
@@ -406,16 +391,16 @@ write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE
 
 ```
 
-#NEON Litterfall
+##NEON Litterfall
 ```{r}
-dataName="NEON_litterfall" #No: 2, 7,8, 11, 17, 18, 20, 23, 25, 27, 38, 41, 45
+dataName="NEON_litterfall"
 NEON_ID="DP1.10033.001"
 if(!file.exists(paste0(dataPath,"/",dataName))){
   dir.create(paste0(dataPath,"/",dataName))
 }
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID,includedSeq=(1:47)[-c(2,7,8,11,17,18,20,23,25,27,38,41,45)])
 }
 
 inFileName <- "ltr_litterCarbonNitrogen.csv"
@@ -464,7 +449,7 @@ outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
 ```
 
-#NEON Foliar Traits
+##NEON Foliar Traits
 ```{r}
 dataName="NEON_plantFoliarTraits"
 NEON_ID="DP1.10026.001"
@@ -474,7 +459,7 @@ if(!file.exists(paste0(dataPath,"/",dataName))){
 }
 
 if(downloadData){
-downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
+  downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID) #missing 30 
 }
 
 inFileName <- "cfc_LMA.csv"
@@ -544,13 +529,31 @@ allDat <- allDat %>% dplyr::select(-sampleID) %>%
 
 outFileName <- paste0(dataName,"ALLdata.csv")
 write.csv(file=paste0(dataPath,outFileName),allDat,row.names = FALSE,quote=FALSE)
-
 ```
 
-#NEON PhenoCam Observations
+##NEON PhenoCam Observations
 ```{r,eval=FALSE}
 source('determinePhenoCamURLs.R')
 source('downloadPhenoCamAndCalculateTransitions.R') #Still need to change to have it save it somewhere
+```
+
+##ERA5 Met Data
+```{r}
+source('downloadERA5.R')
+source('combineERA5data.R')
+```
+
+##Calculate NEON Photoperiods
+```{r}
+source('calculateNEON_photoperiods.R')
 
 ```
+
+
+#Combine NEON Data for each site
+```{r}
+
+```
+
+
 
