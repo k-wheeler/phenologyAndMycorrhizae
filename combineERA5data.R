@@ -39,4 +39,4 @@ named.list <- lapply(NEON_siteNames,combineERA5data)
 
 allDat.matrix <-rbindlist(named.list)
 
-write.csv(paste0(dataPath,"ERA5_metData.csv"),allDat.matrix,row.names = FALSE,quote = FALSE)
+write.csv(file=paste0(dataPath,"ERA5_metData.csv"),allDat.matrix,row.names = FALSE,quote = FALSE)
