@@ -12,5 +12,10 @@ for(s in my_fnames){
   funName="mean"
   dataName="NEON_SingleAirTemperature"
   computeWeeklyMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
-                            dataPath=dataPath,funName="mean",nWeeks=4) 
+                            dataPath=dataPath,funName=funName,nWeeks=8) 
+  
+  funName="sum"
+  dataName="NEON_PrecipitationData"
+  computeWeeklyMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
+                            dataPath=dataPath,funName=funName,nWeeks=8) 
 }

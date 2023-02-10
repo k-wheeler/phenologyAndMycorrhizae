@@ -56,7 +56,16 @@ combineNEONdata <- function(dataName,NEON_ID,selectColumns,inFileName,dataPath,s
   }
 }
 
-calculateDailyWeather <- function(dataName,dataPath,varName,funType,funName){
+calculateDailyWeather <- function(dataName,dataPath,varName,funName){
+  if(funName=="mean"){
+    funType <- mean
+  }else if(funName=="min"){
+    funType <- min
+  }else if(funName=="max"){
+    funType <- max
+  }else if(funName=="sum"){
+    funType <- sum
+  }
   inFileName <- paste0(dataName,"ALLdata.csv")
   outFileName <- paste0(dataName,"Dailydata_",as.character(funName),".csv")
   print(outFileName)
@@ -236,4 +245,88 @@ gapFillFromDayMet_verticalProfiles <- function(dataName,dataPath,varName,funName
   }
 
   write.csv(file=paste0(dataPath,dataName,'Dailydata_',funName,'_gapFilled.csv'),allOutput,row.names = FALSE,quote=FALSE)
+}
+
+gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
+  allData <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character(funName),".csv"))
+  ERALRs <- read.csv(file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",funName,".csv"))
+  
+  ERALRs <- ERALRs %>% dplyr::select(siteID,week,verticalPosition,term,estimate)
+  ERALRs <- pivot_wider(ERALRs,names_from = term,values_from = estimate)
+  colnames(ERALRs) <- c("siteID","week","verticalPosition","intercept","slope")
+  
+  ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
+  if(dataName=="NEON_SingleAirTemperature"){
+    ERAdataName <- 't2m'
+  }else if(dataName=="NEON_PrecipitationData"){ #Total precipitation
+    ERAdataName <- "tp"
+  }
+  ERAdat <- ERAdat %>% filter(var==ERAdataName)
+  if(ERAdataName=="t2m"){
+    ERAdat$value <- as.numeric(ERAdat$value)-273 #Convert K to C
+  }
+  
+  ERAdat <- pivot_wider(ERAdat,names_from=2,values_from=3)
+  
+  allOutput <- matrix(nrow=0,ncol=4)
+  
+  for(s in seq_along(NEON_siteNames)){
+    siteName <- NEON_siteNames[s]
+    print(siteName)
+
+    siteDat <- allData %>% filter(siteID==siteName)
+    if(dataName=="NEON_PrecipitationData"){
+      siteDat$verticalPosition <- "top"
+    }
+    
+    siteDat$date <- as.Date(siteDat$date)
+    siteHeights <- unique(siteDat$verticalPosition)
+    
+    ERAdatSite <- ERAdat %>% filter(siteID==siteName)
+    
+    if(funName=="mean"){
+      ERAdatSite$ERAValue <- ERAdatSite$mean
+    }else if(funName=="min"){
+      ERAdatSite$ERAValue <- ERAdatSite$min
+    }else if(funName=="max"){
+      ERAdatSite$ERAValue <- ERAdatSite$max
+    }else if(funName=="sum"){
+      ERAdatSite$ERAValue <- ERAdatSite$sum
+    }
+
+    if(varName=='tempSingleMean'){
+      siteDat$NEON_value <- siteDat$tempSingleMean
+      siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
+    }else if(varName=='precipBulk'){
+      siteDat$NEON_value <- siteDat$precipBulk
+      siteDat <- siteDat %>% dplyr::select(-precipBulk)
+    }
+    ERAdatSite <- ERAdatSite %>% dplyr::select(date,siteID,ERAValue)
+    allDayMet <- matrix(nrow=0,ncol=ncol(ERAdatSite)) ##
+    for(h in seq_along(siteHeights)){
+      newERAdatSite <- ERAdatSite
+      newERAdatSite$verticalPosition <- siteHeights[h]
+      allDayMet <- rbind(allDayMet,newERAdatSite)
+    }
+    allDayMet$date <- as.Date(allDayMet$date)
+    siteDat$date <- as.Date(siteDat$date)
+    
+    siteDatAll <- merge(allDayMet,siteDat,by=c('siteID','date','verticalPosition'),all=TRUE)
+    
+    siteDatAll$week <- floor((lubridate::yday(as.Date(as.character(siteDatAll$date)))-0.01)/7)+1
+    siteDatAll <- left_join(siteDatAll,ERALRs,by=c('week','verticalPosition','siteID'))
+    
+    siteDatAll$NEON_value[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] <- siteDatAll$slope[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] * 
+      siteDatAll$ERAValue[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] + siteDatAll$intercept[is.na(siteDatAll$NEON_value)|siteDatAll$n<20]
+    if(funName=="sum"){
+      siteDatAll$NEON_value[siteDatAll$NEON_value<0] <- 0
+    }
+    
+    siteDatAll <- siteDatAll[,c('siteID','date','verticalPosition','NEON_value')]
+    colnames(siteDatAll)[colnames(siteDatAll)=="NEON_value"] <- paste(varName,funName,sep="_")
+    
+    allOutput <- rbind(allOutput,siteDatAll)
+  }
+  
+  write.csv(file=paste0(dataPath,dataName,'Dailydata_',funName,'_ERAgapFilled.csv'),allOutput,row.names = FALSE,quote=FALSE)
 }

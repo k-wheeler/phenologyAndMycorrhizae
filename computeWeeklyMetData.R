@@ -28,7 +28,7 @@ computeWeeklyMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks)
   metList=apply(X=phenoDat,MARGIN=1,FUN=calculateAllWeeklyWeather,
                  dataName=dataName,dat=metDat,nWeeks=nWeeks)
   metList_unlisted <-rbindlist(metList,fill=TRUE)
-  write.csv(paste0(dataPath,dataName,"_computedWeeklydata_",funName,"_",siteID,".csv"))
+  write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",siteID,".csv"))
   
 }
 

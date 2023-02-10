@@ -24,8 +24,8 @@ combineERA5data <- function(siteID){
         }
         dat <- colMeans(dat)
         datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
-          summarise(mean=mean(var),min=min(var),max=max(var)) %>%
-          pivot_longer(cols=2:4,names_to="funName",values_to="value") %>%
+          summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
+          pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
           mutate(siteID=siteID,lat=lat,long=long,var=v)
         siteDat <- rbind(siteDat,datTime)
       }

@@ -2,8 +2,53 @@ source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 
 dataName="NEON_SingleAirTemperature"
+dataName="NEON_PrecipitationData"
+varName="precipBulk"
 
-for(summaryStat in c("mean","min","max")){
+ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
+if(dataName=="NEON_SingleAirTemperature"){
+  ERAdataName <- 't2m'
+  summaryStats <- c("mean","min","max")
+}else if(dataName=="NEON_PrecipitationData"){ #Total precipitation
+  ERAdataName <- "tp"
+  summaryStats <- "sum"
+}#else if(dataName==){ #Surface pressure
+#   ERAdataName <- "sp"
+# }else if(dataName==){ #2m dewpoint temperature
+#   ERAdataName <- 'd2m'
+# }else if(dataName==){ #10 metre u wind component
+#   ERAdataName <- "u10"
+# }else if(dataName==){ #10 metre V wind component
+#   ERAdataName <- "v10"
+# }else if(dataName==){#Soil temperature level 1
+#   ERAdataName <- "stl1"
+# }else if(dataName==){#Soil temperature level 2
+#   ERAdataName <- "stl2"
+# }else if(dataName==){#Soil temperature level 3
+#   ERAdataName <- "stl3"
+# }else if(dataName==){ #Soil temperature level 4
+#   ERAdataName <- "stl4"
+# }else if(dataName==){#Volumetric soil water layer 1
+#   ERAdataName <- "swvl1"
+# }else if(dataName==){#Volumetric soil water layer 2
+#   ERAdataName <- "swvl2"
+# }else if(dataName==){#Volumetric soil water layer 3
+#   ERAdataName <- "swvl3"
+# }else if(dataName==){ #Volumetric soil water layer 4
+#   ERAdataName <- "swvl4"
+# }
+
+
+
+ERAdat <- ERAdat %>% filter(var==ERAdataName)
+if(ERAdataName=="t2m"){
+  ERAdat$value <- as.numeric(ERAdat$value)-273 #Convert K to C
+}
+
+ERAdat <- pivot_wider(ERAdat,names_from=2,values_from=3)
+
+
+for(summaryStat in summaryStats){
   allData <- read.csv(paste0(dataPath,dataName,'Dailydata_',summaryStat,'.csv'))
   
   allData$week <- floor((lubridate::yday(allData$date)-0.01)/7)+1
@@ -17,38 +62,36 @@ for(summaryStat in c("mean","min","max")){
     lon <- siteData$field_longitude[siteData$field_site_id==siteName]
     
     siteDat <- allData %>% filter(siteID==siteName)
+    ERAdatSite <- ERAdat %>% filter(siteID==siteName)
     
-    dayMet <- download_daymet(site=siteName,
-                              lat=lat,
-                              lon=lon,
-                              start=2014,
-                              end=2021,
-                              internal=TRUE,
-                              simplify=TRUE)
-    
-    
-    dayMet$date <- as.Date((dayMet$yday-1),origin=as.Date(paste0(dayMet$year,"-01-01")))
-    dayMetMax <- dayMet %>% filter(measurement=="tmax..deg.c.")
-    dayMetMax <- dayMetMax %>% dplyr::select(value,date)
-    
-    dayMetMin <- dayMet %>% filter(measurement=="tmin..deg.c.")
-    dayMetMin <- dayMetMin %>% dplyr::select(value,date)
-    dayMet <- merge(dayMetMax,dayMetMin,by="date")
     if(summaryStat=="mean"){
-      dayMet$dayMetValue <- rowMeans(dayMet[,2:3])
+      ERAdatSite$ERAValue <- ERAdatSite$mean
     }else if(summaryStat=="min"){
-      dayMet$dayMetValue <- dayMet[,3]
+      ERAdatSite$ERAValue <- ERAdatSite$min
     }else if(summaryStat=="max"){
-      dayMet$dayMetValue <- dayMet[,2]
+      ERAdatSite$ERAValue <- ERAdatSite$max
+    }else if(summaryStat=="sum"){
+      ERAdatSite$ERAValue <- ERAdatSite$sum
     }
-    dayMet <- dayMet %>% dplyr::select(date,dayMetValue)
+    ERAdatSite <- ERAdatSite%>% dplyr::select(date,ERAValue)
     
     siteHeights <- unique(siteDat$verticalPosition)
     siteDat$date <- as.Date(siteDat$date)
-    siteDat <- left_join(siteDat,dayMet,by="date")
+    ERAdatSite$date <- as.Date(ERAdatSite$date)
+    siteDat <- left_join(siteDat,ERAdatSite,by="date")
+    if(dataName=="NEON_PrecipitationData"){
+      siteDat$verticalPosition <- "top"
+    }
+    if(varName=='tempSingleMean'){
+      siteDat$NEON_value <- siteDat$tempSingleMean
+      siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
+    }else if(varName=='precipBulk'){
+      siteDat$NEON_value <- siteDat$precipBulk
+      siteDat <- siteDat %>% dplyr::select(-precipBulk)
+    }
     
     fittedModels <- siteDat %>% group_by(week,verticalPosition) %>% 
-      do(model = tryCatch(lm(tempSingleMean~dayMetValue,data=.),error=function(e){NA}))
+      do(model = tryCatch(lm(NEON_value~ERAValue,data=.),error=function(e){NA}))
     
     fittedModels <- subset(fittedModels,!is.na(model))
     
@@ -79,7 +122,7 @@ for(summaryStat in c("mean","min","max")){
     fittedModelSummary <- cbind(newDat,fittedModelsTidied)
     allFittedModelSummaries <- rbind(allFittedModelSummaries,fittedModelSummary)
   }
-  write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithDayMet_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
+  write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
   
 }
 
@@ -210,3 +253,4 @@ for(summaryStat in c("mean","min","max")){
 #   allFittedModelSummaries <- rbind(allFittedModelSummaries,fittedModelSummary)
 # }
 # write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfits.csv"),quote=FALSE,row.names = FALSE)
+
