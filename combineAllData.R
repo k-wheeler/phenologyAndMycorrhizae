@@ -19,29 +19,29 @@ soilPropDat <- soilPropDat %>% dplyr::select(-c(decimalLatitude,decimalLongitude
 
 allComDat <- left_join(phenoDat,soilPropDat,by=c('siteID','year'))
 print("loaded soilProp")
-#NEON Root Characteristics ----
-dataName="NEON_Roots"
-outFileName <- paste0(dataName,"ALLdata.csv")
-rootDat <- read.csv(file=paste0(dataPath,outFileName))
-colnames(rootDat)[3:12] <- paste0('root_',colnames(rootDat[3:12]))
-allComDat <- left_join(allComDat,rootDat,by=c('siteID','year'))
-print("loaded rootDat")
-#NEON Litterfall ----
-dataName="NEON_litterfall"
-outFileName <- paste0(dataName,"ALLdata.csv")
-litterDat <- read.csv(file=paste0(dataPath,outFileName)) %>%
-  subset(functionalGroup%in%c("Leaves","Needles")) %>%
-  dplyr::select(-c(plotType,setDate.x,setDate.y,setDate,functionalGroup))
-colnames(litterDat)[3:10] <- paste0('litter_',colnames(litterDat)[3:10])
-allComDat <- left_join(allComDat,litterDat,by=c('siteID','year'))
-print("loaded litterDat")
-#NEON Foliar Traits ----
-dataName="NEON_plantFoliarTraits"
-outFileName <- paste0(dataName,"ALLdata.csv")
-foliarTraitDat <- read.csv(file=paste0(dataPath,outFileName)) %>% dplyr::select(-plotType)
-colnames(foliarTraitDat)[3:24] <- paste0('foliarTrait_',colnames(foliarTraitDat)[3:24])
-allComDat <- left_join(allComDat,foliarTraitDat,by=c('siteID','year'))
-print("loaded foliarDat")
+# #NEON Root Characteristics ----
+# dataName="NEON_Roots"
+# outFileName <- paste0(dataName,"ALLdata.csv")
+# rootDat <- read.csv(file=paste0(dataPath,outFileName))
+# colnames(rootDat)[3:12] <- paste0('root_',colnames(rootDat[3:12]))
+# allComDat <- left_join(allComDat,rootDat,by=c('siteID','year'))
+# print("loaded rootDat")
+# #NEON Litterfall ----
+# dataName="NEON_litterfall"
+# outFileName <- paste0(dataName,"ALLdata.csv")
+# litterDat <- read.csv(file=paste0(dataPath,outFileName)) %>%
+#   subset(functionalGroup%in%c("Leaves","Needles")) %>%
+#   dplyr::select(-c(plotType,setDate.x,setDate.y,setDate,functionalGroup))
+# colnames(litterDat)[3:10] <- paste0('litter_',colnames(litterDat)[3:10])
+# allComDat <- left_join(allComDat,litterDat,by=c('siteID','year'))
+# print("loaded litterDat")
+# #NEON Foliar Traits ----
+# dataName="NEON_plantFoliarTraits"
+# outFileName <- paste0(dataName,"ALLdata.csv")
+# foliarTraitDat <- read.csv(file=paste0(dataPath,outFileName)) %>% dplyr::select(-plotType)
+# colnames(foliarTraitDat)[3:24] <- paste0('foliarTrait_',colnames(foliarTraitDat)[3:24])
+# allComDat <- left_join(allComDat,foliarTraitDat,by=c('siteID','year'))
+# print("loaded foliarDat")
 
 #NEON Single Air Temp at Various Heights ----
 dataName="NEON_SingleAirTemperature"
@@ -49,8 +49,17 @@ funName="mean"
 tempDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",'HARV',".csv"))
 tempDat <- tempDat %>% mutate(year=lubridate::year(tempDat$date)) %>% dplyr::select(-date,X)
 
-rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
+#rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
 allComDat <- left_join(allComDat,tempDat,by=c('siteID','year'))
+
+#NEON Precipitation ----
+dataName="NEON_PrecipitationData"
+funName="sum"
+precipDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",'HARV',".csv"))
+precipDat <- precipDat %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date,X)
+
+rm(phenoDat,tempDat,soilPropDat)
+allComDat <- left_join(allComDat,precipDat,by=c('siteID','year'))
 
 write.csv(allComDat,file="allComDat.csv",row.names=FALSE,quote=FALSE)
 print("Done")
