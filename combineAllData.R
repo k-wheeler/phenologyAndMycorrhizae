@@ -5,7 +5,11 @@ source('NEON_Data_DownloadAndProcess.R')
 #NEON Phenology Observations (and vegetation structural characteristics and mycorrhizae association) ----
 p=2 #For only breaking leaf buds 
 phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
-phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p])
+phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p]) %>%
+  dplyr::select(siteID,year,dayOfYear,individualID,canopyPosition,plantStatus,stemDiameter,
+                maxCanopyDiameter,percentCover,height,scientificName,growthForm,Mycorrhizal.type)
+#write.csv(phenoDat,file="phenoDat.csv",row.names=FALSE,quote=FALSE)
+
 print("loaded PhenoDat")
 #NEON Soil Physical and Chemical Properties ----
 dataName <- "NEON_soilProperties"
@@ -25,8 +29,10 @@ print("loaded rootDat")
 #NEON Litterfall ----
 dataName="NEON_litterfall"
 outFileName <- paste0(dataName,"ALLdata.csv")
-litterDat <- read.csv(file=paste0(dataPath,outFileName)) %>% dplyr::select(-c(plotType,setDate.x,setDate.y,setDate))
-colnames(litterDat)[3:11] <- paste0('litter_',colnames(litterDat)[3:11])
+litterDat <- read.csv(file=paste0(dataPath,outFileName)) %>%
+  subset(functionalGroup%in%c("Leaves","Needles")) %>%
+  dplyr::select(-c(plotType,setDate.x,setDate.y,setDate,functionalGroup))
+colnames(litterDat)[3:10] <- paste0('litter_',colnames(litterDat)[3:10])
 allComDat <- left_join(allComDat,litterDat,by=c('siteID','year'))
 print("loaded litterDat")
 #NEON Foliar Traits ----
@@ -39,15 +45,14 @@ print("loaded foliarDat")
 
 #NEON Single Air Temp at Various Heights ----
 dataName="NEON_SingleAirTemperature"
-tempMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
-allComDat <- allComDat %>% mutate(rowID=row_number())
+funName="mean"
+tempDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",'HARV',".csv"))
+tempDat <- tempDat %>% mutate(year=lubridate::year(tempDat$date)) %>% dplyr::select(-date,X)
 
-tempList=apply(X=allComDat,MARGIN=1,FUN=calculateAllWeeklyWeather,
-      dataName=dataName,dat=tempMeanDat,nWeeks=5)
-tempList_unlisted <-rbindlist(tempList,idcol='rowID',fill=TRUE)
-allComDat <- left_join(allComDat,tempList_unlisted,by='rowID')
-print("loaded airDat")
-save(allComDat,file="allComDat.RData")
+rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
+allComDat <- left_join(allComDat,tempDat,by=c('siteID','year'))
+
+write.csv(allComDat,file="allComDat.csv",row.names=FALSE,quote=FALSE)
 print("Done")
 
 # tempMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
@@ -82,9 +87,6 @@ print("Done")
 # soilTempMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
 # 
 # #Shade Tolerance ----
-# 
-# #ERA5 Data ----
-# ERA5Dat <- read.csv(paste0(dataPath,"ERA5_metData.csv"))
 # 
 # 
 # 
