@@ -59,7 +59,11 @@ precipDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_
 precipDat <- precipDat %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date,X)
 
 rm(phenoDat,tempDat,soilPropDat)
-allComDat <- left_join(allComDat,precipDat,by=c('siteID','year'))
+allComDat <- allComDat %>% mutate(siteYear=paste0(siteID,year))
+precipDat <- precipDat %>% mutate(siteYear=paste0(siteID,year))
+
+allComDat <- left_join(allComDat,precipDat,by='siteYear')
+
 
 write.csv(allComDat,file="allComDat.csv",row.names=FALSE,quote=FALSE)
 print("Done")
