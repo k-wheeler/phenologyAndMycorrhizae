@@ -1,6 +1,7 @@
 #Load all NEON data 
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
+library(data.table)
 
 #NEON Phenology Observations (and vegetation structural characteristics and mycorrhizae association) ----
 p=2 #For only breaking leaf buds 
@@ -51,7 +52,7 @@ tempDat <- tempDat %>% mutate(year=lubridate::year(tempDat$date)) %>% dplyr::sel
 
 #rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
 allComDat <- left_join(allComDat,tempDat,by=c('siteID','year'))
-
+print("Finished joining temp")
 #NEON Precipitation ----
 dataName="NEON_PrecipitationData"
 funName="sum"
@@ -61,8 +62,12 @@ precipDat <- precipDat %>% mutate(year=lubridate::year(date)) %>% dplyr::select(
 rm(phenoDat,tempDat,soilPropDat)
 allComDat <- allComDat %>% mutate(siteYear=paste0(siteID,year))
 precipDat <- precipDat %>% mutate(siteYear=paste0(siteID,year))
+allComDat <- as.data.table(allComDat)
+precipDat <- as.data.table(precipDat)
 
-allComDat <- left_join(allComDat,precipDat,by='siteYear')
+#allComDat <- left_join(allComDat,precipDat,by='siteYear')
+allComDat <- merge(allComDat,precipDat,
+                   by='siteYear',all.x=TRUE,all.y=FALSE)
 
 
 write.csv(allComDat,file="allComDat.csv",row.names=FALSE,quote=FALSE)
