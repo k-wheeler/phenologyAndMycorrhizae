@@ -16,6 +16,8 @@ calculateAllWeeklyWeather <- function(X,dataName,dat,nWeeks){
   allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
   if(dataName%in%c('NEON_SingleAirTemperature')){
     allWeeks <- pivot_wider(allWeeks,names_from=c(1,4),values_from=2:3)
+  }else if(dataName=="NEON_PrecipitationData"){
+    allWeeks <- pivot_wider(allWeeks,names_from=week,values_from=sumPrecip)
   }
   return(allWeeks)
 }
