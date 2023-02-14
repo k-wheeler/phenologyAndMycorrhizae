@@ -1,9 +1,12 @@
 calculateWeeklyWeather <- function(X,phenoRow,dataName,dat){
-  weekDat <- dat %>% filter(siteID==phenoRow[1],as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-X*7-6),
+  weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-X*7-6),
                                                                      (as.Date(as.character(phenoRow[2]))-X*7),by="day"))
   if(dataName%in%c('NEON_SingleAirTemperature')){
     weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean),
                                                                     CDD=calculateCDD(tempSingleMean)) %>%
+      mutate(week=X,siteID=phenoRow[1],date=phenoRow[2])
+  }else if(dataName=="NEON_PrecipitationData"){
+    weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk)) %>%
       mutate(week=X,siteID=phenoRow[1],date=phenoRow[2])
   }
   return(weekDat)

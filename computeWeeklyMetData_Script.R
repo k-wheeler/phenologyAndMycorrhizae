@@ -9,10 +9,10 @@ for(s in my_fnames){
   source('sharedVariables.R')
   source('NEON_Data_DownloadAndProcess.R')
   source('computeWeeklyMetData.R')
-  funName="mean"
-  dataName="NEON_SingleAirTemperature"
-  computeWeeklyMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
-                            dataPath=dataPath,funName=funName,nWeeks=8) 
+  # funName="mean"
+  # dataName="NEON_SingleAirTemperature"
+  # computeWeeklyMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
+  #                           dataPath=dataPath,funName=funName,nWeeks=8) 
   
   funName="sum"
   dataName="NEON_PrecipitationData"
