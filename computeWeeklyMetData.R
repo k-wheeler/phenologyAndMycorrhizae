@@ -43,9 +43,11 @@ computeWeeklyMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks)
 }
 
 readWeeklyMetDataFiles <- function(p,X,dataName,dataPath,funName){
-  siteDat <- read.csv(file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",X,".csv"),header=TRUE)
-  siteDat$X <- NULL
-  return(siteDat)
+  if(file.exists(file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",X,".csv"))){
+    siteDat <- read.csv(file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",X,".csv"),header=TRUE)
+    siteDat$X <- NULL
+    return(siteDat)
+  }
 }
 
 
