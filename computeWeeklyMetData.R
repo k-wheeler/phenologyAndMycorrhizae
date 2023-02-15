@@ -28,13 +28,15 @@ computeWeeklyMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks)
   phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
   phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName) %>%
     dplyr::select(siteID,date) %>% unique()
-
-  metDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",funName,".csv"))
-  
-  metList=apply(X=phenoDat,MARGIN=1,FUN=calculateAllWeeklyWeather,
-                 dataName=dataName,dat=metDat,nWeeks=nWeeks)
-  metList_unlisted <-rbindlist(metList,fill=TRUE)
-  write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",siteID,".csv"))
+  if(nrow(phenoDat)>0){
+    
+    metDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",funName,".csv"))
+    
+    metList=apply(X=phenoDat,MARGIN=1,FUN=calculateAllWeeklyWeather,
+                  dataName=dataName,dat=metDat,nWeeks=nWeeks)
+    metList_unlisted <-rbindlist(metList,fill=TRUE)
+    write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",siteID,".csv"))
+  }
   
 }
 
