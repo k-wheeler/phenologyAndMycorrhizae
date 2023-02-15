@@ -26,9 +26,11 @@ computeWeeklyMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks)
   #p=2 #For only breaking leaf buds 
   siteName <- siteID
   phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
-  phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName) %>%
-    dplyr::select(siteID,date) %>% unique()
+  phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName)
+  
   if(nrow(phenoDat)>0){
+    phenoDat <- phenoDat %>%
+      dplyr::select(siteID,date) %>% unique()
     
     metDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",funName,".csv"))
     
