@@ -13,6 +13,7 @@ for(s in my_fnames){
   source('NEON_Data_DownloadAndProcess.R')
   source('computeWeeklyMetData.R')
   p=2
+  siteID=NEON_siteNames[s]
   funName="mean"
   dataName="NEON_SingleAirTemperature"
 
