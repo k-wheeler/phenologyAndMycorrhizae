@@ -1,9 +1,11 @@
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
-
-dataName="NEON_SingleAirTemperature"
-dataName="NEON_PrecipitationData"
-varName="precipBulk"
+summaryStats <- c('mean','max','min','sum')
+# dataName="NEON_SingleAirTemperature"
+# dataName="NEON_PrecipitationData"
+# varName="precipBulk"
+dataName="NEON_SoilTemp"
+varName <- 'soilTempMean'
 
 ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
 if(dataName=="NEON_SingleAirTemperature"){
@@ -12,6 +14,8 @@ if(dataName=="NEON_SingleAirTemperature"){
 }else if(dataName=="NEON_PrecipitationData"){ #Total precipitation
   ERAdataName <- "tp"
   summaryStats <- "sum"
+}else if(dataName=="NEON_SoilTemp"){#Soil temperature level 1
+  ERAdataName <- "stl1"
 }#else if(dataName==){ #Surface pressure
 #   ERAdataName <- "sp"
 # }else if(dataName==){ #2m dewpoint temperature
@@ -41,7 +45,7 @@ if(dataName=="NEON_SingleAirTemperature"){
 
 
 ERAdat <- ERAdat %>% filter(var==ERAdataName)
-if(ERAdataName=="t2m"){
+if(ERAdataName%in%c("t2m","stl1")){
   ERAdat$value <- as.numeric(ERAdat$value)-273 #Convert K to C
 }
 
@@ -62,68 +66,72 @@ for(summaryStat in summaryStats){
     lon <- siteData$field_longitude[siteData$field_site_id==siteName]
     
     siteDat <- allData %>% filter(siteID==siteName)
-    ERAdatSite <- ERAdat %>% filter(siteID==siteName)
-    
-    if(summaryStat=="mean"){
-      ERAdatSite$ERAValue <- ERAdatSite$mean
-    }else if(summaryStat=="min"){
-      ERAdatSite$ERAValue <- ERAdatSite$min
-    }else if(summaryStat=="max"){
-      ERAdatSite$ERAValue <- ERAdatSite$max
-    }else if(summaryStat=="sum"){
-      ERAdatSite$ERAValue <- ERAdatSite$sum
-    }
-    ERAdatSite <- ERAdatSite%>% dplyr::select(date,ERAValue)
-    
-    siteHeights <- unique(siteDat$verticalPosition)
-    siteDat$date <- as.Date(siteDat$date)
-    ERAdatSite$date <- as.Date(ERAdatSite$date)
-    siteDat <- left_join(siteDat,ERAdatSite,by="date")
-    if(dataName=="NEON_PrecipitationData"){
-      siteDat$verticalPosition <- "top"
-    }
-    if(varName=='tempSingleMean'){
-      siteDat$NEON_value <- siteDat$tempSingleMean
-      siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
-    }else if(varName=='precipBulk'){
-      siteDat$NEON_value <- siteDat$precipBulk
-      siteDat <- siteDat %>% dplyr::select(-precipBulk)
-    }
-    
-    fittedModels <- siteDat %>% group_by(week,verticalPosition) %>% 
-      do(model = tryCatch(lm(NEON_value~ERAValue,data=.),error=function(e){NA}))
-    
-    fittedModels <- subset(fittedModels,!is.na(model))
-    
-    fittedModelsTidied <- rowwise(fittedModels) %>% summarise(broom::tidy(model))
-    fittedModelsFit <- rowwise(fittedModels) %>% summarise(glance(model))
-    fittedModels <- cbind(fittedModels,fittedModelsFit$r.squared)
-    
-    newDat <- matrix(nrow=nrow(fittedModelsTidied),ncol=4)
-    
-    ct <- 1
-    for(i in 1:nrow(fittedModels)){
-      if(i%%100==0){
-        print(i)
+    if(nrow(siteDat)>0){
+      ERAdatSite <- ERAdat %>% filter(siteID==siteName)
+      
+      if(summaryStat=="mean"){
+        ERAdatSite$ERAValue <- ERAdatSite$mean
+      }else if(summaryStat=="min"){
+        ERAdatSite$ERAValue <- ERAdatSite$min
+      }else if(summaryStat=="max"){
+        ERAdatSite$ERAValue <- ERAdatSite$max
+      }else if(summaryStat=="sum"){
+        ERAdatSite$ERAValue <- ERAdatSite$sum
       }
-      newDat[ct,1] <- siteName
-      newDat[ct,2] <- as.character(fittedModels[i,1])
-      newDat[ct,3] <- as.character(fittedModels[i,2])
-      newDat[ct,4] <- as.character(fittedModels[i,4])
-      ct <- ct + 1
-      newDat[ct,1] <- siteName
-      newDat[ct,2] <- as.character(fittedModels[i,1])
-      newDat[ct,3] <- as.character(fittedModels[i,2])
-      newDat[ct,4] <- as.character(fittedModels[i,4])
-      ct <- ct + 1
+      ERAdatSite <- ERAdatSite %>% dplyr::select(date,ERAValue)
+      
+      siteHeights <- unique(siteDat$verticalPosition)
+      siteDat$date <- as.Date(siteDat$date)
+      ERAdatSite$date <- as.Date(ERAdatSite$date)
+      siteDat <- left_join(siteDat,ERAdatSite,by="date")
+      if(dataName=="NEON_PrecipitationData"){
+        siteDat$verticalPosition <- "top"
+      }
+      if(varName=='tempSingleMean'){
+        siteDat$NEON_value <- siteDat$tempSingleMean
+        siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
+      }else if(varName=='precipBulk'){
+        siteDat$NEON_value <- siteDat$precipBulk
+        siteDat <- siteDat %>% dplyr::select(-precipBulk)
+      }else if(varName=='soilTempMean'){
+        siteDat$NEON_value <- siteDat$soilTempMean
+        siteDat <- siteDat %>% dplyr::select(-soilTempMean)
+      }
+      
+      fittedModels <- siteDat %>% group_by(week,verticalPosition) %>% 
+        do(model = tryCatch(lm(NEON_value~ERAValue,data=.),error=function(e){NA}))
+      
+      fittedModels <- subset(fittedModels,!is.na(model))
+      
+      fittedModelsTidied <- rowwise(fittedModels) %>% summarise(broom::tidy(model))
+      fittedModelsFit <- rowwise(fittedModels) %>% summarise(glance(model))
+      fittedModels <- cbind(fittedModels,fittedModelsFit$r.squared)
+      
+      newDat <- matrix(nrow=nrow(fittedModelsTidied),ncol=4)
+      
+      ct <- 1
+      for(i in 1:nrow(fittedModels)){
+        if(i%%100==0){
+          print(i)
+        }
+        newDat[ct,1] <- siteName
+        newDat[ct,2] <- as.character(fittedModels[i,1])
+        newDat[ct,3] <- as.character(fittedModels[i,2])
+        newDat[ct,4] <- as.character(fittedModels[i,4])
+        ct <- ct + 1
+        newDat[ct,1] <- siteName
+        newDat[ct,2] <- as.character(fittedModels[i,1])
+        newDat[ct,3] <- as.character(fittedModels[i,2])
+        newDat[ct,4] <- as.character(fittedModels[i,4])
+        ct <- ct + 1
+      }
+      
+      colnames(newDat) <- c('siteID','week','verticalPosition','r.squared')
+      fittedModelSummary <- cbind(newDat,fittedModelsTidied)
+      allFittedModelSummaries <- rbind(allFittedModelSummaries,fittedModelSummary)
     }
-    
-    colnames(newDat) <- c('siteID','week','verticalPosition','r.squared')
-    fittedModelSummary <- cbind(newDat,fittedModelsTidied)
-    allFittedModelSummaries <- rbind(allFittedModelSummaries,fittedModelSummary)
+    write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
   }
-  write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
-  
 }
 
 
