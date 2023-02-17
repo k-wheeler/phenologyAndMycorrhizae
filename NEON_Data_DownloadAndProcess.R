@@ -260,9 +260,11 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
     ERAdataName <- 't2m'
   }else if(dataName=="NEON_PrecipitationData"){ #Total precipitation
     ERAdataName <- "tp"
+  }else if(dataName=="NEON_SoilTemp"){#Soil temperature level 1
+    ERAdataName <- "stl1"
   }
   ERAdat <- ERAdat %>% filter(var==ERAdataName)
-  if(ERAdataName=="t2m"){
+  if(ERAdataName%in%c("t2m","stl1")){
     ERAdat$value <- as.numeric(ERAdat$value)-273 #Convert K to C
   }
   
@@ -273,7 +275,7 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
   for(s in seq_along(NEON_siteNames)){
     siteName <- NEON_siteNames[s]
     print(siteName)
-
+    
     siteDat <- allData %>% filter(siteID==siteName)
     if(dataName=="NEON_PrecipitationData"){
       siteDat$verticalPosition <- "top"
@@ -293,31 +295,45 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
     }else if(funName=="sum"){
       ERAdatSite$ERAValue <- ERAdatSite$sum
     }
-
+    
     if(varName=='tempSingleMean'){
       siteDat$NEON_value <- siteDat$tempSingleMean
       siteDat <- siteDat %>% dplyr::select(-tempSingleMean)
     }else if(varName=='precipBulk'){
       siteDat$NEON_value <- siteDat$precipBulk
       siteDat <- siteDat %>% dplyr::select(-precipBulk)
+    }else if(varName=='soilTempMean'){
+      siteDat$NEON_value <- siteDat$soilTempMean
+      siteDat <- siteDat %>% dplyr::select(-soilTempMean)
     }
     ERAdatSite <- ERAdatSite %>% dplyr::select(date,siteID,ERAValue)
     allDayMet <- matrix(nrow=0,ncol=ncol(ERAdatSite)) ##
+    if(length(siteHeights)==0){
+      newERAdatSite <- ERAdatSite
+      newERAdatSite$verticalPosition <- 100
+      allDayMet <- rbind(allDayMet,newERAdatSite)
+    }
     for(h in seq_along(siteHeights)){
       newERAdatSite <- ERAdatSite
       newERAdatSite$verticalPosition <- siteHeights[h]
       allDayMet <- rbind(allDayMet,newERAdatSite)
     }
-    allDayMet$date <- as.Date(allDayMet$date)
-    siteDat$date <- as.Date(siteDat$date)
-    
-    siteDatAll <- merge(allDayMet,siteDat,by=c('siteID','date','verticalPosition'),all=TRUE)
-    
-    siteDatAll$week <- floor((lubridate::yday(as.Date(as.character(siteDatAll$date)))-0.01)/7)+1
-    siteDatAll <- left_join(siteDatAll,ERALRs,by=c('week','verticalPosition','siteID'))
-    
-    siteDatAll$NEON_value[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] <- siteDatAll$slope[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] * 
-      siteDatAll$ERAValue[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] + siteDatAll$intercept[is.na(siteDatAll$NEON_value)|siteDatAll$n<20]
+    if(nrow(allDayMet)>0){
+      allDayMet$date <- as.Date(allDayMet$date)
+      siteDat$date <- as.Date(siteDat$date)
+      
+      siteDatAll <- merge(allDayMet,siteDat,by=c('siteID','date','verticalPosition'),all=TRUE)
+      
+      siteDatAll$week <- floor((lubridate::yday(as.Date(as.character(siteDatAll$date)))-0.01)/7)+1
+      siteDatAll <- left_join(siteDatAll,ERALRs,by=c('week','verticalPosition','siteID'))
+      
+      siteDatAll$NEON_value[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] <- siteDatAll$slope[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] * 
+        siteDatAll$ERAValue[is.na(siteDatAll$NEON_value)|siteDatAll$n<20] + siteDatAll$intercept[is.na(siteDatAll$NEON_value)|siteDatAll$n<20]
+    }else{
+      siteDatAll <- allDayMet
+      siteDatAll$NEON_value <- siteDatAll$ERAValue
+      siteDatAll$ERAValue <- NULL
+    }
     if(funName=="sum"){
       siteDatAll$NEON_value[siteDatAll$NEON_value<0] <- 0
     }
