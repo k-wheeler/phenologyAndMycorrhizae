@@ -54,9 +54,12 @@ calculateTotalWeather <- function(X,dataName,dat){
   phenoRow=X
   weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-120),
                                                                                    (as.Date(as.character(phenoRow[2]))-1),by="day"))
-  if(dataName%in%c('NEON_SingleAirTemperature')){
+  if(dataName==('NEON_SingleAirTemperature')){
     weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean),
                                                                     CDD=calculateCDD(tempSingleMean))
+  }else if(dataName==('NEON_SoilTemp')){
+    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(soil_GDD=calculateGDD(soilTempMean_mean),
+                                                                    soil_CDD=calculateCDD(soilTempMean_mean))
   }else if(dataName=="NEON_PrecipitationData"){
     weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk)) 
   }
@@ -65,7 +68,7 @@ calculateTotalWeather <- function(X,dataName,dat){
   return(weekDat)
 }
 
-computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks){
+computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName){
   siteName <- siteID
   phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
   phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName)
@@ -74,12 +77,20 @@ computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName,nWeeks){
     phenoDat <- phenoDat %>%
       dplyr::select(siteID,date) %>% unique()
     
-    metDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",funName,".csv"))
+    metDat <- read.csv(paste0(dataPath,dataName,'Dailydata_',funName,'_ERAgapFilled.csv'))
     
     metList=apply(X=phenoDat,MARGIN=1,FUN=calculateTotalWeather,
                   dataName=dataName,dat=metDat) #Calculates for each row 
     metList_unlisted <-rbindlist(metList,fill=TRUE)
     write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))
+  }
+}
+
+readTotalMetDataFiles <- function(p,X,dataName,dataPath,funName){
+  if(file.exists(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"))){
+    siteDat <- read.csv(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"),header=TRUE)
+    siteDat$X <- NULL
+    return(siteDat)
   }
 }
 
