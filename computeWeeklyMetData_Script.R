@@ -12,6 +12,7 @@ for(s in my_fnames){
   source('sharedVariables.R')
   source('NEON_Data_DownloadAndProcess.R')
   source('computeWeeklyMetData.R')
+  p=2
   funName="mean"
   dataName="NEON_SingleAirTemperature"
 
@@ -35,7 +36,7 @@ for(s in my_fnames){
   
   if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
     print(NEON_siteNames[s])
-    computeTotalMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
+    computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
                              dataPath=dataPath,funName=funName)
   }
 }
