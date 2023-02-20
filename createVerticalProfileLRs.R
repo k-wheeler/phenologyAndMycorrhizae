@@ -1,11 +1,12 @@
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 summaryStats <- c('mean','max','min','sum')
-# dataName="NEON_SingleAirTemperature"
+dataName="NEON_SingleAirTemperature"
+varName <- 'tempSingleMean'
 # dataName="NEON_PrecipitationData"
 # varName="precipBulk"
-dataName="NEON_SoilTemp"
-varName <- 'soilTempMean'
+# dataName="NEON_SoilTemp"
+# varName <- 'soilTempMean'
 
 ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
 if(dataName=="NEON_SingleAirTemperature"){
@@ -57,7 +58,7 @@ for(summaryStat in summaryStats){
   
   allData$week <- floor((lubridate::yday(allData$date)-0.01)/7)+1
   
-  allFittedModelSummaries <- matrix(nrow=0,ncol=9)
+  allFittedModelSummaries <- matrix(nrow=0,ncol=5)
   
   for(s in (seq_along(NEON_siteNames))){
     siteName <- NEON_siteNames[s]
@@ -128,10 +129,41 @@ for(summaryStat in summaryStats){
       
       colnames(newDat) <- c('siteID','week','verticalPosition','r.squared')
       fittedModelSummary <- cbind(newDat,fittedModelsTidied)
+      
+      fittedModelSummary <- fittedModelSummary %>% dplyr::select(siteID,week,verticalPosition,term,estimate)
+      fittedModelSummary <- pivot_wider(fittedModelSummary,names_from = term,values_from = estimate)
+      colnames(fittedModelSummary) <- c("siteID","week","verticalPosition","intercept","slope")
+      
+      #Need to pad with missing week-height combinations
+      fullModelSummary <- matrix(nrow=(length(siteHeights)*53),ncol=ncol(fittedModelSummary))
+      ct=1
+      for(h in seq_along(siteHeights)){
+        for(w in 1:53){
+          print(ct)
+          subDat <- fittedModelSummary %>% filter(week==w,verticalPosition==siteHeights[h])
+          if(nrow(subDat)==0){
+            newW=w
+            while(nrow(subDat)==0){
+              #print(newW)
+              subDat <- fittedModelSummary %>% filter(week==newW,verticalPosition==siteHeights[h])
+              newW <- newW + 1
+              if((newW)==54){
+                newW=1
+              }
+            }
+            subDat$week <- w
+          }
+          fullModelSummary[ct,] <- as.character(subDat)
+          ct=ct + 1
+        }
+      }
+      
       allFittedModelSummaries <- rbind(allFittedModelSummaries,fittedModelSummary)
     }
-    write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
   }
+  write.csv(allFittedModelSummaries,file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",summaryStat,".csv"),quote=FALSE,row.names = FALSE)
+  
+  
 }
 
 
