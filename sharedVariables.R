@@ -35,3 +35,6 @@ NEON_PFTs <- c("Deciduous broadleaf","Semi-evergreen broadleaf","Evergreen broad
 
 funTypes <- c(mean,max,min)
 funNames <- c("mean","max","min")
+
+maxVerticalHeights <- read.csv(file="NEON_site_maxHeights.csv",header=TRUE)
+
