@@ -55,13 +55,13 @@ calculateTotalWeather <- function(X,dataName,dat){
   weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-120),
                                                                                    (as.Date(as.character(phenoRow[2]))-1),by="day"))
   if(dataName==('NEON_SingleAirTemperature')){
-    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean),
-                                                                    CDD=calculateCDD(tempSingleMean))
+    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean_mean),
+                                                                    CDD=calculateCDD(tempSingleMean_mean))
   }else if(dataName==('NEON_SoilTemp')){
     weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(soil_GDD=calculateGDD(soilTempMean_mean),
                                                                     soil_CDD=calculateCDD(soilTempMean_mean))
   }else if(dataName=="NEON_PrecipitationData"){
-    weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk)) 
+    weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk_sum)) 
   }
   weekDat <- weekDat %>%
     mutate(siteID=as.character(phenoRow[1]),date=as.character(phenoRow[2]))
