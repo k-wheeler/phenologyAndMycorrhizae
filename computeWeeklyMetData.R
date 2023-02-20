@@ -94,6 +94,27 @@ readTotalMetDataFiles <- function(p,X,dataName,dataPath,funName){
   }
 }
 
+determineVerticalValue_top <- function(X){
+  phenoSite <- X[1]
+  topHeight <- maxVerticalHeights$maxHeight[which(maxVerticalHeights$siteID==phenoSite)]
+  GDD <- X[which(names(X)==paste0("GDD_",topHeight))]
+  CDD <- X[which(names(X)==paste0("CDD_",topHeight))]
+  return(as.numeric(c(CDD,GDD)))
+}
+
+determineVerticalValue_closest <- function(X){
+  rowHeight <- X[which(names(X)=="height")]
+  if(!is.na(rowHeight)){
+    closeHeight <- max((round(as.numeric(rowHeight)/10)*10),10)
+    GDD <- X[which(names(X)==paste0("GDD_",closeHeight))]
+    CDD <- X[which(names(X)==paste0("CDD_",closeHeight))]
+  }else{
+    CDD <- NA
+    GDD <- NA
+  }
+  return((c(as.numeric(CDD),as.numeric(GDD))))
+}
+
 
 
 

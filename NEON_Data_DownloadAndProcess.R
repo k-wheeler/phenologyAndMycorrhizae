@@ -308,9 +308,9 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
     }
     ERAdatSite <- ERAdatSite %>% dplyr::select(date,siteID,ERAValue)
     allDayMet <- matrix(nrow=0,ncol=ncol(ERAdatSite)) ##
-    if(length(siteHeights)==0){
+    if(length(siteHeights)==0 & dataName=="soilTempMean"){
       newERAdatSite <- ERAdatSite
-      newERAdatSite$verticalPosition <- 100
+      newERAdatSite$verticalPosition <- 501
       allDayMet <- rbind(allDayMet,newERAdatSite)
     }
     for(h in seq_along(siteHeights)){
