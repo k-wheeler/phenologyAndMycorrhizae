@@ -251,10 +251,6 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
   allData <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character(funName),".csv"))
   ERALRs <- read.csv(file=paste0(dataName,"towerHeight_LRfitsWithERA5_",dataName,"_",funName,".csv"))
   
-  ERALRs <- ERALRs %>% dplyr::select(siteID,week,verticalPosition,term,estimate)
-  ERALRs <- pivot_wider(ERALRs,names_from = term,values_from = estimate)
-  colnames(ERALRs) <- c("siteID","week","verticalPosition","intercept","slope")
-  
   ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
   if(dataName=="NEON_SingleAirTemperature"){
     ERAdataName <- 't2m'
