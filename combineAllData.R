@@ -60,7 +60,20 @@ rm(allWeekDatList)
 tempDat <- pivot_wider(allWeeks,names_from=verticalPosition,values_from=c(GDD,CDD))
 rm(allWeeks)
 #rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
+
+#Edit NEON Temperature ----
+metList=apply(X=tempDat,MARGIN=1,FUN=determineVerticalValue_top)#Calculates for each row 
+
+tempDat$CDD_top <- metList[1,]
+tempDat$GDD_top <- metList[2,]
+
 allComDat <- left_join(allComDat,tempDat,by=c('siteID','date'))
+
+metList=apply(X=allComDat,MARGIN=1,FUN=determineVerticalValue_closest) #Calculates for each row 
+
+allComDat$CDD_closest <- metList[1,]
+allComDat$GDD_closest <- metList[2,]
+
 print("Finished joining temp")
 rm(tempDat)
 
@@ -100,21 +113,27 @@ allComDat <- left_join(allComDat,photoperiodDat,by=c('siteID','date'))
 
 #Shade Tolerance ----
 shadeTol <- read.csv(file=paste0(dataPath,'shadeToleranceSpecies.csv'),header=TRUE)
-names(shadeTol)[names(shadeTol)=="X...Species"] <- "scientificName"
-shadeTol <- shadeTol %>% dplyr::select(scientificName,Shade.tolerance,
+names(shadeTol)[names(shadeTol)=="X...Species"] <- "newScientificName"
+shadeTol <- shadeTol %>% dplyr::select(newScientificName,Shade.tolerance,
                                        Drought.tolerance,Waterlogging.tolerance) 
 shadeTol$Shade.tolerance <- sapply(strsplit(as.character(shadeTol$Shade.tolerance), "±"), `[`, 1)
 shadeTol$Drought.tolerance <- sapply(strsplit(as.character(shadeTol$Drought.tolerance), "±"), `[`, 1)
 shadeTol$Waterlogging.tolerance <- sapply(strsplit(as.character(shadeTol$Waterlogging.tolerance), "±"), `[`, 1)
 shadeTol <- shadeTol[2:nrow(shadeTol),]
+genus <- sapply(strsplit(as.character(allComDat$scientificName), " "), `[`, 1)
+species <- sapply(strsplit(as.character(allComDat$scientificName), " "), `[`, 2)
+allComDat$newScientificName <- paste(genus,species)
 
-allComDat <- left_join(allComDat,shadeTol,by=c('scientificName'))
+allComDat <- left_join(allComDat,shadeTol,by=c('newScientificName'))
 
 #Editing of Data Object ----
 
+allComDat <- allComDat %>% dplyr::select(-c(percentCover,soilTemp_,soilTemp_O,
+                                            soilTemp_M,litterDepth_,soilMoisture_,
+                                            newScientificName,date))
+allComDat <- allComDat %>% filter(year<2022)
 
-
-save(allComDat,file=paste0("allCombinedDat_",gsub(" ","",NEON_phenophase_names[p]),".RData"))
+save(allComDat,file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData"))
 #Machine Learning Modeling ----
 
 #readr::write_csv(allComDat,file="allComDat.csv")
@@ -207,11 +226,5 @@ bstSparse <- xgboost(data = test2$data, label = test2$label,
 # wsMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
 # wsMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
 # wsMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
-# 
-# #NEON Soil Temp ----
-# dataName="NEON_SoilTemp"
-# soilTempMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
-# soilTempMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
-# soilTempMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
 # 
 
