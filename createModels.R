@@ -1,8 +1,10 @@
+source('sharedVariables.R')
+library(caTools)
+library('xgboost')
+
 p=2
 load(file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData")) #Loaded as allComDat
 
-library(caTools)
-library('xgboost')
 
 set.seed(0)
 specificCol <- "phenoStatus"
