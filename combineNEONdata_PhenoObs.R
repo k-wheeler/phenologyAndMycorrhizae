@@ -1,5 +1,5 @@
 source('sharedVariables.R')
-combineNEONdata_PhenoObs <- function(saveType=""){
+combineNEONdata_PhenoObs <- function(saveType="",p=""){
   allPhenoObsDat <- matrix(nrow=0,ncol=32)
   for(s in seq_along(NEON_siteNames)[1:47]){
     print(NEON_siteNames[s])
@@ -8,28 +8,32 @@ combineNEONdata_PhenoObs <- function(saveType=""){
     pheDat <- pheDat %>% mutate(dataQF_phenoStatus=dataQF)
     pheDat <- pheDat[,c('siteID', 'plotID', 'date', 'dayOfYear', 'individualID',
                         'phenophaseName','phenophaseStatus','phenophaseIntensityDefinition','phenophaseIntensity','dataQF_phenoStatus')]
-    
-    
-    pheChar <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividualperyear.csv'))
-    pheChar <- pheChar %>% mutate(dataQF_characteristics=dataQF)
-    pheChar <- pheChar[,c('individualID','patchOrIndividual',
-                          'canopyPosition','plantStatus','stemDiameter','measurementHeight',
-                          'maxCanopyDiameter','ninetyCanopyDiameter','patchSize','percentCover','height',
-                          'diseaseType','dataQF_characteristics')]
-    pheDat <- left_join(pheDat,pheChar,by="individualID")
-    
-    indChar <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividual.csv'))
-    indChar <- indChar[,c('individualID','decimalLatitude','decimalLongitude','elevation',
-                          'elevationUncertainty','subtypeSpecification','scientificName','nativeStatusCode',
-                          'growthForm')]
-    pheDat <- left_join(pheDat,indChar,by="individualID")
-    pheDat$Genus <- sapply(strsplit(as.character(pheDat$scientificName)," "),`[`,1)
-    pheDat <- left_join(pheDat,fungalRootDat,by="Genus")
-    allPhenoObsDat <- rbind(allPhenoObsDat,pheDat)
-    if(saveType=="bySite"){
-      write.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',NEON_siteNames[s],'.csv'),pheDat,row.names = FALSE,quote=FALSE)
+    if(p!=""){
+      pheDat <- pheDat %>% filter(phenophaseName==NEON_phenophase_names[p])
     }
-
+    if(nrow(pheDat)>0){
+      
+      pheChar <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividualperyear.csv'))
+      pheChar <- pheChar %>% mutate(dataQF_characteristics=dataQF)
+      pheChar <- pheChar[,c('individualID','patchOrIndividual',
+                            'canopyPosition','plantStatus','stemDiameter','measurementHeight',
+                            'maxCanopyDiameter','ninetyCanopyDiameter','patchSize','percentCover','height',
+                            'diseaseType','dataQF_characteristics')]
+      pheDat <- left_join(pheDat,pheChar,by="individualID")
+      
+      indChar <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividual.csv'))
+      indChar <- indChar[,c('individualID','decimalLatitude','decimalLongitude','elevation',
+                            'elevationUncertainty','subtypeSpecification','scientificName','nativeStatusCode',
+                            'growthForm')]
+      pheDat <- left_join(pheDat,indChar,by="individualID")
+      pheDat$Genus <- sapply(strsplit(as.character(pheDat$scientificName)," "),`[`,1)
+      pheDat <- left_join(pheDat,fungalRootDat,by="Genus")
+      allPhenoObsDat <- rbind(allPhenoObsDat,pheDat)
+      if(saveType=="bySite"){
+        write.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',NEON_siteNames[s],'.csv'),pheDat,row.names = FALSE,quote=FALSE)
+      }
+    }
+    
   }
   allPhenoObsDat$year <- lubridate::year(allPhenoObsDat$date)
   allPhenoObsDat$plantStatus <- gsub(",","",allPhenoObsDat$plantStatus)
@@ -46,8 +50,10 @@ combineNEONdata_PhenoObs <- function(saveType=""){
     print(NEON_phenophase_names[p])
     subDat <- allPhenoObsDat %>% filter(phenophaseName==NEON_phenophase_names[p],phenophaseStatus=="yes",phenophaseIntensity!="")
     write.csv(subDat,file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllIntensities_',gsub(" ","",NEON_phenophase_names[p]),'.csv'),row.names=FALSE,quote=FALSE)
+  }else if(saveType=="allStatusPhenophase"){
+    write.csv(allPhenoObsDat,file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'),row.names=FALSE,quote=FALSE)
   }
-
+  
 }
 
 determinePhenophaseTimingForLeaves <- function(dataPath){

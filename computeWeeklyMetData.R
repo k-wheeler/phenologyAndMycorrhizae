@@ -70,9 +70,10 @@ calculateTotalWeather <- function(X,dataName,dat){
 
 computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName){
   siteName <- siteID
-  phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
-  phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName)
-  
+  #phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv')) 
+  phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+  #phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p],siteID==siteName)
+  phenoDat <- phenoDat %>% filter(siteID==siteName)
   if(nrow(phenoDat)>0){
     phenoDat <- phenoDat %>%
       dplyr::select(siteID,date) %>% unique()
