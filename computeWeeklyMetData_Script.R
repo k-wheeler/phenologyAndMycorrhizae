@@ -14,11 +14,11 @@ for(s in my_fnames){
   source('computeWeeklyMetData.R')
   p=2
   siteID=NEON_siteNames[s]
-  # funName="mean"
-  # dataName="NEON_SingleAirTemperature"
+  #funName="mean"
+  #dataName="NEON_SingleAirTemperature"
   # 
-  # # funName="sum"
-  # # dataName="NEON_PrecipitationData"
+  #funName="sum"
+  #dataName="NEON_PrecipitationData"
   # 
   # # if(!file.exists(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",NEON_siteNames[s],".csv"))){
   # # print(NEON_siteNames[s])
