@@ -1,12 +1,12 @@
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 summaryStats <- c('mean','max','min','sum')
-dataName="NEON_SingleAirTemperature"
-varName <- 'tempSingleMean'
-# dataName="NEON_PrecipitationData"
-# varName="precipBulk"
-# dataName="NEON_SoilTemp"
-# varName <- 'soilTempMean'
+#dataName="NEON_SingleAirTemperature"
+#varName <- 'tempSingleMean'
+#dataName="NEON_PrecipitationData"
+#varName="precipBulk"
+dataName="NEON_SoilTemp"
+varName <- 'soilTempMean'
 
 ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
 if(dataName=="NEON_SingleAirTemperature"){
