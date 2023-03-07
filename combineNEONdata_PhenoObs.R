@@ -4,7 +4,7 @@ combineNEONdata_PhenoObs <- function(saveType="",p=""){
   for(s in seq_along(NEON_siteNames)[1:47]){
     print(NEON_siteNames[s])
     
-    pheDat <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_statusintensity.csv'))
+    pheDat <- read.csv(paste0(dataPath,"NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_statusintensity.csv'))
     pheDat <- pheDat %>% mutate(dataQF_phenoStatus=dataQF)
     pheDat <- pheDat[,c('siteID', 'plotID', 'date', 'dayOfYear', 'individualID',
                         'phenophaseName','phenophaseStatus','phenophaseIntensityDefinition','phenophaseIntensity','dataQF_phenoStatus')]
@@ -13,7 +13,7 @@ combineNEONdata_PhenoObs <- function(saveType="",p=""){
     }
     if(nrow(pheDat)>0){
       
-      pheChar <- read.csv(paste0(dataPath,"/NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividualperyear.csv'))
+      pheChar <- read.csv(paste0(dataPath,"NEON_PhenologyObservations/",NEON_siteNames[s],'/filesToStack10055/stackedFiles/phe_perindividualperyear.csv'))
       pheChar <- pheChar %>% mutate(dataQF_characteristics=dataQF)
       pheChar <- pheChar[,c('individualID','patchOrIndividual',
                             'canopyPosition','plantStatus','stemDiameter','measurementHeight',
