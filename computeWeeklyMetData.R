@@ -52,7 +52,7 @@ readWeeklyMetDataFiles <- function(p,X,dataName,dataPath,funName){
 
 calculateTotalWeather <- function(X,dataName,dat){
   phenoRow=X
-  weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-120),
+  weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-30),
                                                                                    (as.Date(as.character(phenoRow[2]))-1),by="day"))
   if(dataName==('NEON_SingleAirTemperature')){
     weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean_mean),
