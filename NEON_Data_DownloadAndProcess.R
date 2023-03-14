@@ -118,7 +118,7 @@ calculateGDD <- function(values){
 }
 
 calculateCDD <- function(values){
-  offsets <- 5-values
+  offsets <- 10-values
   return(sum(offsets[offsets>0]))
 }
 
