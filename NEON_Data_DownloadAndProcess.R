@@ -112,13 +112,13 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funName){
   
 }
 
-calculateGDD <- function(values){
-  offsets <- values-5
+calculateGDD <- function(values,baseTemp=5){
+  offsets <- values-baseTemp
   return(sum(offsets[offsets>0]))
 }
 
-calculateCDD <- function(values){
-  offsets <- 10-values
+calculateCDD <- function(values,baseTemp=10){
+  offsets <- baseTemp-values
   return(sum(offsets[offsets>0]))
 }
 

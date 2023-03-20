@@ -50,16 +50,16 @@ readWeeklyMetDataFiles <- function(p,X,dataName,dataPath,funName){
   }
 }
 
-calculateTotalWeather <- function(X,dataName,dat){
+calculateTotalWeather <- function(X,dataName,dat,baseTemp){
   phenoRow=X
   weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-30),
                                                                                    (as.Date(as.character(phenoRow[2]))-1),by="day"))
   if(dataName==('NEON_SingleAirTemperature')){
-    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean_mean),
-                                                                    CDD=calculateCDD(tempSingleMean_mean))
+    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(GDD=calculateGDD(tempSingleMean_mean,baseTemp),
+                                                                    CDD=calculateCDD(tempSingleMean_mean,baseTemp))
   }else if(dataName==('NEON_SoilTemp')){
-    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(soil_GDD=calculateGDD(soilTempMean_mean),
-                                                                    soil_CDD=calculateCDD(soilTempMean_mean))
+    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(soil_GDD=calculateGDD(soilTempMean_mean,baseTemp),
+                                                                    soil_CDD=calculateCDD(soilTempMean_mean,baseTemp))
   }else if(dataName=="NEON_PrecipitationData"){
     weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk_sum)) 
   }
@@ -68,7 +68,7 @@ calculateTotalWeather <- function(X,dataName,dat){
   return(weekDat)
 }
 
-computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName){
+computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName,baseTemp){
   siteName <- siteID
   #phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv')) 
   phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
@@ -81,9 +81,13 @@ computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName){
     metDat <- read.csv(paste0(dataPath,dataName,'Dailydata_',funName,'_ERAgapFilled.csv'))
     
     metList=apply(X=phenoDat,MARGIN=1,FUN=calculateTotalWeather,
-                  dataName=dataName,dat=metDat) #Calculates for each row 
+                  dataName=dataName,dat=metDat,baseTemp=baseTemp) #Calculates for each row 
     metList_unlisted <-rbindlist(metList,fill=TRUE)
-    write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))
+    if(dataName%in%c("NEON_SingleAirTemperature",'NEON_SoilTemp')){
+      write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))
+    }else{
+      write.csv(metList_unlisted,file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))
+    }
   }
 }
 
