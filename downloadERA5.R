@@ -30,7 +30,7 @@ variables <- tibble::tribble(
 
 var <- variables[["api_name"]]
 
-for(s in seq_along(NEON_siteNames)){
+for(s in seq_along(NEON_siteNames)[41:47]){
   siteID <- NEON_siteNames[s]
   print(siteID)
   lat <- siteData$field_latitude[siteData$field_site_id==siteID]
