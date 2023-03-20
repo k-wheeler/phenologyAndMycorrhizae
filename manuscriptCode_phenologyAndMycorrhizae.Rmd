@@ -29,8 +29,10 @@ if(downloadData){
   downloadNEONdata(dataName=dataName,NEON_ID=NEON_ID)
 }
 combineNEONdata_PhenoObs(saveType=="bySite") #Saved in individual files by site because 1 file was too large 
-combineNEONdata_PhenoObs(saveType=="firstOfPhenophase")
+combineNEONdata_PhenoObs(saveType="firstOfPhenophase")
 combineNEONdata_PhenoObs(saveType = "allOfPhenophase")
+combineNEONdata_PhenoObs(saveType="allStatusPhenophase",p=2)
+combineNEONdata_PhenoObs(saveType="allStatusPhenophase",p=3)
 ```
 
 ##NEON Single Air Temperature At Various Heights 
@@ -47,8 +49,8 @@ combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath)
 
 for(f in seq_along(funTypes)){
-  calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funName=funNames[f])
-  gapFillFromERA_verticalProfiles(dataName=dataName,dataPath=dataPath,varName=varName,funName=funName[f])
+  # calculateDailyWeather(dataName=dataName,dataPath=dataPath,varName=varName,funName=funNames[f])
+  gapFillFromERA_verticalProfiles(dataName=dataName,dataPath=dataPath,varName=varName,funName=funNames[f])
 }
 
 ```
@@ -249,7 +251,7 @@ allDat <- pivot_wider(allDat,names_from=6,values_from=7:11)
 ##Still need to run:
 inFileName <- "sls_soilChemistry.csv"
 selectColumns <- c('plotID','d15N','organicd13C','nitrogenPercent','organicCPercent',
-                   'CNratio')
+                   'CNratio') 
 dat4 <- combineNEONdata(dataName=dataName,NEON_ID=NEON_ID,selectColumns=selectColumns,
                 inFileName=inFileName,dataPath=dataPath,saveFile = FALSE)
 dat4 <- dat4 %>% mutate(collectDate=format(as.POSIXct(collectDate,                                                  format='%Y-%m-%dT%H:%M'),format="%Y-%m-%d")) %>% 

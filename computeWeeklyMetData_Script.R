@@ -13,9 +13,11 @@ for(s in my_fnames){
   source('NEON_Data_DownloadAndProcess.R')
   source('computeWeeklyMetData.R')
   p=3 #Colored leaves
+  
   siteID=NEON_siteNames[s]
   funName="mean"
   dataName="NEON_SingleAirTemperature"
+  for(baseTemp in seq(0,20,5)){
 
   # funName="sum"
   # dataName="NEON_PrecipitationData"
@@ -26,27 +28,28 @@ for(s in my_fnames){
   #                           dataPath=dataPath,funName=funName,nWeeks=8)
   # }
 
-  if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
+  if(!file.exists(paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
     print(NEON_siteNames[s])
     computeTotalMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
-                              dataPath=dataPath,funName=funName)
+                              dataPath=dataPath,funName=funName,baseTemp=baseTemp)
+  }
   }
 
-  funName="sum"
-  dataName="NEON_PrecipitationData"
-
-  if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
-    print(NEON_siteNames[s])
-    computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
-                             dataPath=dataPath,funName=funName)
-  }
-  
-  funName="mean"
-  dataName="NEON_SoilTemp"
-  
-  if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
-    print(NEON_siteNames[s])
-    computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
-                             dataPath=dataPath,funName=funName)
-  }
+  # funName="sum"
+  # dataName="NEON_PrecipitationData"
+  # 
+  # if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
+  #   print(NEON_siteNames[s])
+  #   computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
+  #                            dataPath=dataPath,funName=funName)
+  # }
+  # 
+  # funName="mean"
+  # dataName="NEON_SoilTemp"
+  # 
+  # if(!file.exists(paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
+  #   print(NEON_siteNames[s])
+  #   computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
+  #                            dataPath=dataPath,funName=funName)
+  # }
 }

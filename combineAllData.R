@@ -3,13 +3,36 @@ source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
 #library(data.table)
 source('computeWeeklyMetData.R')
+library('purrr')
 
 #NEON Phenology Observations (and vegetation structural characteristics and mycorrhizae association) ----
 p=2 #For only breaking leaf buds 
-phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))   
-phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p]) %>%
-  dplyr::select(siteID,year,date,dayOfYear,individualID,canopyPosition,plantStatus,stemDiameter,
+p=3 #For colored leaves
+#phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+phenoDat$phenoStatus <- "no"
+if(p==2){
+  phenoDat$phenoStatus[phenoDat$phenophaseIntensity=="11 to 100"] <- "yes"
+}else if(p==3){
+  phenoDat$phenoStatus[phenoDat$phenophaseIntensity=="5-24%"] <- "yes"
+}
+
+
+subPhenoDat <- phenoDat %>% filter(phenoStatus=="yes") %>%
+  group_by(year,individualID) %>% slice(1:1) %>% 
+  dplyr::select(year,date,individualID) 
+phenoDat <- left_join(phenoDat,subPhenoDat,by=c('year','individualID'))
+phenoDat <- phenoDat %>% filter(date.x <= date.y,!is.na(height))
+names(phenoDat)[names(phenoDat)=="date.x"] <- "date"
+
+phenoDat <- phenoDat %>%
+  dplyr::select(siteID,year,date,dayOfYear,individualID,phenoStatus,canopyPosition,plantStatus,stemDiameter,
                 maxCanopyDiameter,percentCover,height,scientificName,growthForm,Mycorrhizal.type)
+phenoDat$year <- as.numeric(phenoDat$year)
+rm(subPhenoDat)
+# phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p]) %>%
+#   dplyr::select(siteID,year,date,dayOfYear,individualID,canopyPosition,plantStatus,stemDiameter,
+#                 maxCanopyDiameter,percentCover,height,scientificName,growthForm,Mycorrhizal.type)
 #write.csv(phenoDat,file="phenoDat.csv",row.names=FALSE,quote=FALSE)
 
 print("loaded PhenoDat")
@@ -71,6 +94,12 @@ allComDat <- left_join(allComDat,tempDat,by=c('siteID','date'))
 
 metList=apply(X=allComDat,MARGIN=1,FUN=determineVerticalValue_closest) #Calculates for each row 
 
+if(is.null(nrow(metList))){
+  metList_unlisted <- data.frame(t(sapply(metList, function(x) x[1:2])))
+  metList_unlisted <- t(metList_unlisted)
+  metList <- metList_unlisted
+  rm(metList_unlisted)
+}
 allComDat$CDD_closest <- metList[1,]
 allComDat$GDD_closest <- metList[2,]
 
@@ -126,8 +155,14 @@ allComDat$newScientificName <- paste(genus,species)
 
 allComDat <- left_join(allComDat,shadeTol,by=c('newScientificName'))
 
-#Editing of Data Object ----
+#Site climate characteristics
+siteData_sub <- siteData %>% dplyr::select(field_site_id,field_latitude,field_longitude,field_mean_elevation_m,
+                                           field_mean_annual_temperature_C,field_mean_annual_precipitation_mm,
+                                           field_mean_canopy_height_m)
+names(siteData_sub)[names(siteData_sub)=="field_site_id"] <- "siteID"
+allComDat <- left_join(allComDat,siteData_sub,by='siteID')
 
+#Editing of Data Object ----
 allComDat <- allComDat %>% dplyr::select(-c(percentCover,soilTemp_,soilTemp_O,
                                             soilTemp_M,litterDepth_,soilMoisture_,
                                             newScientificName,date))
