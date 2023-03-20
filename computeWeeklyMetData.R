@@ -91,11 +91,19 @@ computeTotalMetDataFiles <- function(p,siteID,dataName,dataPath,funName,baseTemp
   }
 }
 
-readTotalMetDataFiles <- function(p,X,dataName,dataPath,funName){
-  if(file.exists(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"))){
-    siteDat <- read.csv(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"),header=TRUE)
-    siteDat$X <- NULL
-    return(siteDat)
+readTotalMetDataFiles <- function(p,X,dataName,dataPath,funName,baseTemp){
+  if(dataName=="NEON_SingleAirTemperature"){
+    if(file.exists(file=paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"))){
+      siteDat <- read.csv(file=paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"),header=TRUE)
+      siteDat$X <- NULL
+      return(siteDat)
+    }
+  }else{
+    if(file.exists(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"))){
+      siteDat <- read.csv(file=paste0(dataPath,dataName,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",X,".csv"),header=TRUE)
+      siteDat$X <- NULL
+      return(siteDat)
+    }
   }
 }
 
