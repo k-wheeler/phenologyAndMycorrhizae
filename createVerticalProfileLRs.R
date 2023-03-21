@@ -5,8 +5,10 @@ summaryStats <- c('mean','max','min','sum')
 #varName <- 'tempSingleMean'
 #dataName="NEON_PrecipitationData"
 #varName="precipBulk"
-dataName="NEON_SoilTemp"
-varName <- 'soilTempMean'
+# dataName="NEON_SoilTemp"
+# varName <- 'soilTempMean'
+dataName="NEON_SoilMoisture"
+varName <- 'soilMoistureMean'
 
 ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
 if(dataName=="NEON_SingleAirTemperature"){
@@ -17,6 +19,9 @@ if(dataName=="NEON_SingleAirTemperature"){
   summaryStats <- "sum"
 }else if(dataName=="NEON_SoilTemp"){#Soil temperature level 1
   ERAdataName <- "stl1"
+}else if(dataName=="NEON_SoilMoisture"){#Volumetric soil water layer 1
+  ERAdataName <- "swvl1"
+  summaryStats <- c("mean","min","max")
 }#else if(dataName==){ #Surface pressure
 #   ERAdataName <- "sp"
 # }else if(dataName==){ #2m dewpoint temperature
@@ -25,9 +30,7 @@ if(dataName=="NEON_SingleAirTemperature"){
 #   ERAdataName <- "u10"
 # }else if(dataName==){ #10 metre V wind component
 #   ERAdataName <- "v10"
-# }else if(dataName==){#Soil temperature level 1
-#   ERAdataName <- "stl1"
-# }else if(dataName==){#Soil temperature level 2
+#else if(dataName==){#Soil temperature level 2
 #   ERAdataName <- "stl2"
 # }else if(dataName==){#Soil temperature level 3
 #   ERAdataName <- "stl3"
@@ -97,6 +100,9 @@ for(summaryStat in summaryStats){
       }else if(varName=='soilTempMean'){
         siteDat$NEON_value <- siteDat$soilTempMean
         siteDat <- siteDat %>% dplyr::select(-soilTempMean)
+      }else if(varName=="soilMoisture"){
+        siteDat$NEON_value <- siteDat$soilMoistureMean
+        siteDat <- siteDat %>% dplyr::select(-soilMoistureMean)
       }
       
       fittedModels <- siteDat %>% group_by(week,verticalPosition) %>% 

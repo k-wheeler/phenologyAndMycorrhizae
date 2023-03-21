@@ -70,7 +70,7 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funName){
   outFileName <- paste0(dataName,"Dailydata_",as.character(funName),".csv")
   print(outFileName)
   allData <- read.csv(file=paste0(dataPath,inFileName))
-  if(dataName%in%c("NEON_SingleAirTemperature", "NEON_PAR","NEON_SoilTemp","NEON_relativeHumidity","NEON_Windspeed")){
+  if(dataName%in%c("NEON_SingleAirTemperature", "NEON_PAR","NEON_SoilTemp","NEON_relativeHumidity","NEON_Windspeed","NEON_SoilMoisture")){
     allDaily <- matrix(nrow=0,ncol=5)
   }else{
     allDaily <- matrix(nrow=0,ncol=4)
@@ -84,12 +84,14 @@ calculateDailyWeather <- function(dataName,dataPath,varName,funName){
     names(allData)[names(allData)=="RHFinalQF"] <- 'finalQF'
   }else if(dataName=="NEON_Windspeed"){
     names(allData)[names(allData)=="windSpeedFinalQF"] <- 'finalQF'
+  }else if(dataName=="NEON_SoilMoisture"){
+    names(allData)[names(allData)=="VSWCFinalQF"] <- 'finalQF'
   }
   for(s in seq_along(NEON_siteNames)){
     siteName <- NEON_siteNames[s]
     print(siteName)
     allData$oldValue <- allData[,varName]
-    if(dataName%in%c("NEON_SingleAirTemperature", "NEON_PAR","NEON_SoilTemp","NEON_relativeHumidity","NEON_Windspeed")){
+    if(dataName%in%c("NEON_SingleAirTemperature", "NEON_PAR","NEON_SoilTemp","NEON_relativeHumidity","NEON_Windspeed","NEON_SoilMoisture")){
       subDat <- allData %>% filter(siteID==siteName) %>% 
         filter(finalQF==0 | is.na(finalQF)) %>%
         mutate(date = lubridate::floor_date(as.POSIXct(startDateTime))) %>%
@@ -258,6 +260,8 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
     ERAdataName <- "tp"
   }else if(dataName=="NEON_SoilTemp"){#Soil temperature level 1
     ERAdataName <- "stl1"
+  }else if(dataName=="NEON_SoilMoisture"){
+    ERAdataName <- "swvl1"
   }
   ERAdat <- ERAdat %>% filter(var==ERAdataName)
   if(ERAdataName%in%c("t2m","stl1")){
