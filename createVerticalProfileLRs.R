@@ -8,7 +8,7 @@ summaryStats <- c('mean','max','min','sum')
 # dataName="NEON_SoilTemp"
 # varName <- 'soilTempMean'
 dataName="NEON_SoilMoisture"
-varName <- 'soilMoistureMean'
+varName <- 'VSWCMean'
 
 ERAdat <- read.csv(paste0(dataPath,'ERA5_metData.csv'),header=TRUE)
 if(dataName=="NEON_SingleAirTemperature"){
@@ -100,9 +100,9 @@ for(summaryStat in summaryStats){
       }else if(varName=='soilTempMean'){
         siteDat$NEON_value <- siteDat$soilTempMean
         siteDat <- siteDat %>% dplyr::select(-soilTempMean)
-      }else if(varName=="soilMoisture"){
-        siteDat$NEON_value <- siteDat$soilMoistureMean
-        siteDat <- siteDat %>% dplyr::select(-soilMoistureMean)
+      }else if(varName=="VSWCMean"){
+        siteDat$NEON_value <- siteDat$VSWCMean
+        siteDat <- siteDat %>% dplyr::select(-VSWCMean)
       }
       
       fittedModels <- siteDat %>% group_by(week,verticalPosition) %>% 
