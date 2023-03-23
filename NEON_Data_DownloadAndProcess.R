@@ -305,10 +305,13 @@ gapFillFromERA_verticalProfiles <- function(dataName,dataPath,varName,funName){
     }else if(varName=='soilTempMean'){
       siteDat$NEON_value <- siteDat$soilTempMean
       siteDat <- siteDat %>% dplyr::select(-soilTempMean)
+    }else if(varName=="VSWCMean"){
+      siteDat$NEON_value <- siteDat$VSWCMean
+      siteDat <- siteDat %>% dplyr::select(-VSWCMean)
     }
     ERAdatSite <- ERAdatSite %>% dplyr::select(date,siteID,ERAValue)
     allDayMet <- matrix(nrow=0,ncol=ncol(ERAdatSite)) ##
-    if(length(siteHeights)==0 & dataName=="soilTempMean"){
+    if(length(siteHeights)==0 & varName %in% c("soilTempMean","VSWCMean")){
       newERAdatSite <- ERAdatSite
       newERAdatSite$verticalPosition <- 501
       allDayMet <- rbind(allDayMet,newERAdatSite)
