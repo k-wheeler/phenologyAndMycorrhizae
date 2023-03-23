@@ -15,26 +15,25 @@ for(s in my_fnames){
   p=3 #Colored leaves
   
   siteID=NEON_siteNames[s]
-  funName="mean"
-  dataName="NEON_SingleAirTemperature"
-  for(baseTemp in seq(0,20,5)){
-
-  # funName="sum"
-  # dataName="NEON_PrecipitationData"
-
-  # if(!file.exists(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",NEON_siteNames[s],".csv"))){
-  # print(NEON_siteNames[s])
-  #   computeWeeklyMetDataFiles(p=2,siteID=NEON_siteNames[s],dataName=dataName,
-  #                           dataPath=dataPath,funName=funName,nWeeks=8)
+  # funName="mean"
+  # dataName="NEON_SingleAirTemperature"
+  # for(baseTemp in seq(0,20,5)){
+  #   if(!file.exists(paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
+  #     print(NEON_siteNames[s])
+  #     computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
+  #                              dataPath=dataPath,funName=funName,baseTemp=baseTemp)
+  #   }
   # }
-
+  
+  funName="mean"
+  dataName="NEON_SoilMoisture"
+  baseTemp=NA
   if(!file.exists(paste0(dataPath,dataName,"_",baseTemp,"_computedTotalMetData_",gsub(" ","",NEON_phenophase_names[p]),"_",funName,"_",siteID,".csv"))){
     print(NEON_siteNames[s])
     computeTotalMetDataFiles(p=p,siteID=NEON_siteNames[s],dataName=dataName,
-                              dataPath=dataPath,funName=funName,baseTemp=baseTemp)
+                             dataPath=dataPath,funName=funName,baseTemp=baseTemp)
   }
-  }
-
+  
   # funName="sum"
   # dataName="NEON_PrecipitationData"
   # 

@@ -62,6 +62,10 @@ calculateTotalWeather <- function(X,dataName,dat,baseTemp){
                                                                     soil_CDD=calculateCDD(soilTempMean_mean,baseTemp))
   }else if(dataName=="NEON_PrecipitationData"){
     weekDat <- weekDat %>% summarise(sumPrecip=sum(precipBulk_sum)) 
+  }else if(dataName=="NEON_SoilMoisture"){
+    weekDat <- dat %>% filter(siteID==as.character(phenoRow[1]),as.Date(date)%in%seq((as.Date(as.character(phenoRow[2]))-7),
+                                                                                     (as.Date(as.character(phenoRow[2]))-1),by="day"))
+    weekDat <- weekDat %>% group_by(verticalPosition) %>% summarise(soil_moisture=mean(VSWCMean_mean))
   }
   weekDat <- weekDat %>%
     mutate(siteID=as.character(phenoRow[1]),date=as.character(phenoRow[2]))
