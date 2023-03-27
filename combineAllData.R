@@ -1,14 +1,13 @@
 #Load all NEON data 
 source('sharedVariables.R')
 source('NEON_Data_DownloadAndProcess.R')
-#library(data.table)
 source('computeWeeklyMetData.R')
-library('purrr')
 
-#NEON Phenology Observations (and vegetation structural characteristics and mycorrhizae association) ----
 p=2 #For only breaking leaf buds 
 p=3 #For colored leaves
-#phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+baseTemp=20
+
+#NEON Phenology Observations (and vegetation structural characteristics and mycorrhizae association) ----
 phenoDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
 phenoDat$phenoStatus <- "no"
 if(p==2){
@@ -17,25 +16,25 @@ if(p==2){
   phenoDat$phenoStatus[phenoDat$phenophaseIntensity=="5-24%"] <- "yes"
 }
 
-
 subPhenoDat <- phenoDat %>% filter(phenoStatus=="yes") %>%
-  group_by(year,individualID) %>% slice(1:1) %>% 
-  dplyr::select(year,date,individualID) 
-phenoDat <- left_join(phenoDat,subPhenoDat,by=c('year','individualID'))
+  group_by(year,individualID,height) %>% slice(1:1) %>% 
+  dplyr::select(year,date,individualID,height) 
+phenoDat <- left_join(phenoDat,subPhenoDat,by=c('year','individualID','height'))
 phenoDat <- phenoDat %>% filter(date.x <= date.y,!is.na(height))
 names(phenoDat)[names(phenoDat)=="date.x"] <- "date"
 
 phenoDat <- phenoDat %>%
-  dplyr::select(siteID,year,date,dayOfYear,individualID,phenoStatus,canopyPosition,plantStatus,stemDiameter,
-                maxCanopyDiameter,percentCover,height,scientificName,growthForm,Mycorrhizal.type)
+  dplyr::select(siteID,year,date,dayOfYear,individualID,phenoStatus,canopyPosition,plantStatus,
+                height,scientificName,growthForm,Mycorrhizal.type)
 phenoDat$year <- as.numeric(phenoDat$year)
 rm(subPhenoDat)
-# phenoDat <- phenoDat %>% filter(phenophaseIntensity == mediumIntensity_phenophases[p]) %>%
-#   dplyr::select(siteID,year,date,dayOfYear,individualID,canopyPosition,plantStatus,stemDiameter,
-#                 maxCanopyDiameter,percentCover,height,scientificName,growthForm,Mycorrhizal.type)
-#write.csv(phenoDat,file="phenoDat.csv",row.names=FALSE,quote=FALSE)
-
 print("loaded PhenoDat")
+
+phenoDat <- phenoDat %>% 
+  filter(growthForm=="Deciduous broadleaf") %>% 
+  group_by(siteID,year,date,dayOfYear,individualID,phenoStatus,canopyPosition,plantStatus,height,scientificName,
+           growthForm, Mycorrhizal.type) %>% slice(1:1)
+
 #NEON Soil Physical and Chemical Properties ----
 dataName <- "NEON_soilProperties"
 outFileName <- paste0(dataName,"ALLdata.csv")
@@ -44,46 +43,18 @@ soilPropDat <- soilPropDat %>% dplyr::select(-c(decimalLatitude,decimalLongitude
 
 allComDat <- left_join(phenoDat,soilPropDat,by=c('siteID','year'))
 print("loaded soilProp")
-# #NEON Root Characteristics ----
-# dataName="NEON_Roots"
-# outFileName <- paste0(dataName,"ALLdata.csv")
-# rootDat <- read.csv(file=paste0(dataPath,outFileName))
-# colnames(rootDat)[3:12] <- paste0('root_',colnames(rootDat[3:12]))
-# allComDat <- left_join(allComDat,rootDat,by=c('siteID','year'))
-# print("loaded rootDat")
-# #NEON Litterfall ----
-# dataName="NEON_litterfall"
-# outFileName <- paste0(dataName,"ALLdata.csv")
-# litterDat <- read.csv(file=paste0(dataPath,outFileName)) %>%
-#   subset(functionalGroup%in%c("Leaves","Needles")) %>%
-#   dplyr::select(-c(plotType,setDate.x,setDate.y,setDate,functionalGroup))
-# colnames(litterDat)[3:10] <- paste0('litter_',colnames(litterDat)[3:10])
-# allComDat <- left_join(allComDat,litterDat,by=c('siteID','year'))
-# print("loaded litterDat")
-# #NEON Foliar Traits ----
-# dataName="NEON_plantFoliarTraits"
-# outFileName <- paste0(dataName,"ALLdata.csv")
-# foliarTraitDat <- read.csv(file=paste0(dataPath,outFileName)) %>% dplyr::select(-plotType)
-# colnames(foliarTraitDat)[3:24] <- paste0('foliarTrait_',colnames(foliarTraitDat)[3:24])
-# allComDat <- left_join(allComDat,foliarTraitDat,by=c('siteID','year'))
-# print("loaded foliarDat")
 
 #NEON Single Air Temp at Various Heights ----
 dataName="NEON_SingleAirTemperature"
 funName="mean"
-rm(phenoDat,soilPropDat,rootDat,litterDat,foliarTraitDat)
-baseTemp <- 20
+rm(phenoDat,soilPropDat)
 allWeekDatList <- lapply(X=NEON_siteNames,FUN=readTotalMetDataFiles,p=p,
                          dataName=dataName,dataPath=dataPath,funName=funName,baseTemp=baseTemp)
 allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
 rm(allWeekDatList)
 
-#tempDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",'HARV',".csv"))
-#tempDat <- allWeeks %>% mutate(year=lubridate::year(date)) %>% dplyr::select(-date)
-
 tempDat <- pivot_wider(allWeeks,names_from=verticalPosition,values_from=c(GDD,CDD))
 rm(allWeeks)
-#rm(phenoDat,foliarTraitDat,litterDat,rootDat,soilPropDat)
 
 #Edit NEON Temperature ----
 metList=apply(X=tempDat,MARGIN=1,FUN=determineVerticalValue_top)#Calculates for each row 
@@ -106,35 +77,6 @@ allComDat$GDD_closest <- metList[2,]
 
 print("Finished joining temp")
 rm(tempDat)
-
-#NEON Precipitation ----
-dataName="NEON_PrecipitationData"
-funName="sum"
-# precipDat <- read.csv(paste0(dataPath,dataName,"_computedWeeklyData_",funName,"_",'HARV',".csv"))
-allWeekDatList <- lapply(X=NEON_siteNames,FUN=readTotalMetDataFiles,p=p,
-                         dataName=dataName,dataPath=dataPath,funName=funName)
-allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
-rm(allWeekDatList)
-
-precipDat <- allWeeks
-rm(allWeeks)
-
-allComDat <- left_join(allComDat,precipDat,by=c('siteID','date'))
-rm(precipDat)
-
-#NEON Soil Temp ----
-dataName="NEON_SoilTemp"
-funName="mean"
-allWeekDatList <- lapply(X=NEON_siteNames,FUN=readTotalMetDataFiles,p=p,
-                         dataName=dataName,dataPath=dataPath,funName=funName)
-allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
-rm(allWeekDatList)
-
-soilTempDat <- pivot_wider(allWeeks,names_from=verticalPosition,values_from=c(soil_GDD,soil_CDD))
-rm(allWeeks)
-
-allComDat <- left_join(allComDat,soilTempDat,by=c('siteID','date'))
-rm(soilTempDat)
 
 #NEON Soil Moisture ----
 dataName="NEON_SoilMoisture"
@@ -178,103 +120,91 @@ names(siteData_sub)[names(siteData_sub)=="field_site_id"] <- "siteID"
 allComDat <- left_join(allComDat,siteData_sub,by='siteID')
 
 #Editing of Data Object ----
-allComDat <- allComDat %>% dplyr::select(-c(percentCover,soilTemp_,soilTemp_O,
+allComDat <- allComDat %>% dplyr::select(-c(soilTemp_,soilTemp_O,
                                             soilTemp_M,litterDepth_,soilMoisture_,
-                                            newScientificName,date))
-allComDat <- allComDat %>% filter(year<2022)
+                                            newScientificName,
+                                            litterDepth_O,litterDepth_M,soilMoisture_O,soilMoisture_M,
+                                            dryMassFraction_O,dryMassFraction_M,dryMassFraction_))
+allComDat <- allComDat %>% filter(year<2022) %>% 
+  filter(!is.na(CDD_10))
+
+allComDat$month <- lubridate::month(as.Date(allComDat$dayOfYear,
+                                            origin=paste0((allComDat$year-1),"-12-31")))
+allComDat$dy <- lubridate::day(as.Date(allComDat$dayOfYear,
+                                       origin=paste0((allComDat$year-1),"-12-31")))
+
+#Add Drought ----
+combinedDrought <- read.csv(file="droughtsAtNEON.csv")
+
+allComDat <- left_join(allComDat,combinedDrought,by=c("siteID","year"))
+
+allComDat$drought <- NA
+allComDat$drought[allComDat$month==1] <- allComDat$X1[allComDat$month==1]
+allComDat$drought[allComDat$month==2 &allComDat$dy<15] <- allComDat$X1[allComDat$month==2 &allComDat$dy<15]
+allComDat$drought[allComDat$month==2 &allComDat$dy>14] <- allComDat$X2[allComDat$month==2 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==3 &allComDat$dy<15] <- allComDat$X2[allComDat$month==3 &allComDat$dy<15]
+allComDat$drought[allComDat$month==3 &allComDat$dy>14] <- allComDat$X3[allComDat$month==3 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==4 &allComDat$dy<15] <- allComDat$X3[allComDat$month==4 &allComDat$dy<15]
+allComDat$drought[allComDat$month==4 &allComDat$dy>14] <- allComDat$X4[allComDat$month==4 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==5 &allComDat$dy<15] <- allComDat$X4[allComDat$month==5 &allComDat$dy<15]
+allComDat$drought[allComDat$month==5 &allComDat$dy>14] <- allComDat$X5[allComDat$month==5 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==6 &allComDat$dy<15] <- allComDat$X5[allComDat$month==6 &allComDat$dy<15]
+allComDat$drought[allComDat$month==6 &allComDat$dy>14] <- allComDat$X6[allComDat$month==6 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==7 &allComDat$dy<15] <- allComDat$X6[allComDat$month==7 &allComDat$dy<15]
+allComDat$drought[allComDat$month==7 &allComDat$dy>14] <- allComDat$X7[allComDat$month==7 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==8 &allComDat$dy<15] <- allComDat$X7[allComDat$month==8 &allComDat$dy<15]
+allComDat$drought[allComDat$month==8 &allComDat$dy>14] <- allComDat$X8[allComDat$month==8 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==9 &allComDat$dy<15] <- allComDat$X8[allComDat$month==9 &allComDat$dy<15]
+allComDat$drought[allComDat$month==9 &allComDat$dy>14] <- allComDat$X9[allComDat$month==9 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==10 &allComDat$dy<15] <- allComDat$X9[allComDat$month==10 &allComDat$dy<15]
+allComDat$drought[allComDat$month==10 &allComDat$dy>14] <- allComDat$X10[allComDat$month==10 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==11 &allComDat$dy<15] <- allComDat$X10[allComDat$month==11 &allComDat$dy<15]
+allComDat$drought[allComDat$month==11 &allComDat$dy>14] <- allComDat$X11[allComDat$month==11 &allComDat$dy>14]
+
+allComDat$drought[allComDat$month==12 &allComDat$dy<15] <- allComDat$X11[allComDat$month==12 &allComDat$dy<15]
+allComDat$drought[allComDat$month==12 &allComDat$dy>14] <- allComDat$X12[allComDat$month==12 &allComDat$dy>14]
+
+allComDat <- allComDat %>% ungroup()
+allComDat$X7 <- as.numeric(allComDat$X7)
+allComDat$X8 <- as.numeric(allComDat$X8)
+allComDat$X9 <- as.numeric(allComDat$X9)
+allComDat <- allComDat %>% mutate(averageDrought = rowMeans(dplyr::select(allComDat,X7,X8,X9),na.rm=TRUE))
+
+#Changing Variable Types ----
+allComDat$phenoStatus[allComDat$phenoStatus=="yes"] <- 1
+allComDat$phenoStatus[allComDat$phenoStatus=="no"] <- 0
+
+allComDat$phenoStatus <- as.factor(allComDat$phenoStatus)
+allComDat$GDD_10 <- as.numeric(allComDat$GDD_10)
+allComDat$CDD_10 <- as.numeric(allComDat$CDD_10)
+allComDat$CDD_closest <- as.numeric(allComDat$CDD_closest)
+allComDat$daylength <- as.numeric(allComDat$daylength)
+allComDat$soilMoisture <- as.numeric(allComDat$`501`)
+allComDat$drought <- as.numeric(allComDat$drought)
+allComDat$Shade.tolerance <- as.numeric(allComDat$Shade.tolerance)
+allComDat$Drought.tolerance <- as.numeric(allComDat$Drought.tolerance)
+allComDat$height <- as.numeric(allComDat$height)
+allComDat$growthForm <- as.factor(allComDat$growthForm)
+allComDat$Mycorrhizal.type <- as.factor(allComDat$Mycorrhizal.type)
+allComDat$canopyPosition <- as.factor(allComDat$canopyPosition)
+allComDat$CNratio <- as.numeric(allComDat$CNratio)
+allComDat$field_mean_annual_temperature_C <- as.numeric(allComDat$field_mean_annual_temperature_C)
+allComDat$field_mean_annual_precipitation_mm <- as.numeric(allComDat$field_mean_annual_precipitation_mm)
+
+allComDat <- allComDat %>% filter(!is.na(drought)) %>% filter(dayOfYear>=213) %>%
+  filter(plantStatus=="Live")
+
+allComDat$X1=allComDat$X2=allComDat$X3=allComDat$X4=
+  allComDat$X5=allComDat$X6=allComDat$X7=allComDat$X8=
+  allComDat$X9=allComDat$X10=allComDat$X11=allComDat$X12<- NULL
 
 save(allComDat,file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData"))
-#Machine Learning Modeling ----
-
-#readr::write_csv(allComDat,file="allComDat.csv")
-print("Done Combining Data")
-# library('h2o')
-# h2o.init()
-allComDat_sub <- allComDat %>% filter(growthForm=="Deciduous broadleaf") %>% 
-  dplyr::select(-individualID,-scientificName,-growthForm)
-library(randomForest)
-library(caTools)
-library('xgboost')
-
-set.seed(0)
-
-sample = sample.split(allComDat_sub$dayOfYear, SplitRatio = .75)
-train = subset(allComDat_sub, sample == TRUE)
-test  = subset(allComDat_sub, sample == FALSE)
-train_x <- data.matrix(train[,-3])
-train_y <- data.matrix(train[,3])
-
-test_x <- data.matrix(test[,-3])
-test_y <- data.matrix(test[,3])
-
-xgb_train = xgb.DMatrix(data = train_x, label = train_y)
-xgb_test = xgb.DMatrix(data = test_x, label = test_y)
-
-watchlist = list(train=xgb_train, test=xgb_test)
-
-model = xgb.train(data = xgb_train, max.depth = 3, watchlist=watchlist, nrounds = 100)
-pred_y <- predict(model,test_x)
-mdl <- lm(pred_y~test_y)
-
-importance_matrix <- xgb.importance(
-  feature_names = colnames(train_x), 
-  model = model
-)
-
-pdf(file="importancePlot.pdf",
-     width=6,height=20)
-xgb.plot.importance(importance_matrix)
-dev.off()
-
-# rf <- randomForest(
-#   dayOfYear ~ .,
-#   data=train,
-#   na.action = na.roughfix
-# )
-
-test <- as.matrix(cbind(c(1,2,3,4,5),c(1,2,3,4,5)))
-test2 <- list(data=test[,1],label=test[,2])
-
-
-
-
-bstSparse <- xgboost(data = test2$data, label = test2$label, 
-                     max.depth = 2, eta = 1, nthread = 2, nrounds = 2, 
-                     objective = "binary:logistic")
-
-
-# allComDat_sub <- as.h2o(allComDat_sub)
-# 
-# #Create Random Forest Model ----
-# splits <- h2o.splitFrame(data = allComDat_sub,
-#                          ratios = c(0.8),  #partition data into 80% and 20% chunks
-#                          seed = 198)
-# train <- splits[[1]]
-# test <- splits[[2]]
-# 
-# rf <- h2o.randomForest(x = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
-#                        y = c("Species"),
-#                        training_frame = train,
-#                        model_id = "our.rf",
-#                        seed = 1234)
-
-
-# #NEON PAR ----
-# dataName="NEON_PAR"
-# PARMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
-# PARMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
-# PARMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
-# 
-# #NEON RH ----
-# dataName="NEON_relativeHumidity"
-# RHMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
-# RHMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
-# RHMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
-# 
-# #NEON Windspeed ----
-# dataName="NEON_Windspeed"
-# wsMeanDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('mean'),".csv"))
-# wsMaxDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('max'),".csv"))
-# wsMinDat <- read.csv(paste0(dataPath,dataName,"Dailydata_",as.character('min'),".csv"))
-# 
-
