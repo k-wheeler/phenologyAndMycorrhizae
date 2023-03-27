@@ -72,8 +72,9 @@ print("loaded soilProp")
 dataName="NEON_SingleAirTemperature"
 funName="mean"
 rm(phenoDat,soilPropDat,rootDat,litterDat,foliarTraitDat)
+baseTemp <- 20
 allWeekDatList <- lapply(X=NEON_siteNames,FUN=readTotalMetDataFiles,p=p,
-                         dataName=dataName,dataPath=dataPath,funName=funName)
+                         dataName=dataName,dataPath=dataPath,funName=funName,baseTemp=baseTemp)
 allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
 rm(allWeekDatList)
 
@@ -134,6 +135,20 @@ rm(allWeeks)
 
 allComDat <- left_join(allComDat,soilTempDat,by=c('siteID','date'))
 rm(soilTempDat)
+
+#NEON Soil Moisture ----
+dataName="NEON_SoilMoisture"
+funName="mean"
+allWeekDatList <- lapply(X=NEON_siteNames,FUN=readTotalMetDataFiles,p=p,
+                         dataName=dataName,dataPath=dataPath,funName=funName)
+allWeeks <-rbindlist(allWeekDatList,fill=TRUE)
+rm(allWeekDatList)
+
+soilMoistureDat <- pivot_wider(allWeeks,names_from=verticalPosition,values_from=soil_moisture)
+rm(allWeeks)
+
+allComDat <- left_join(allComDat,soilMoistureDat,by=c('siteID','date'))
+rm(soilMoistureDat)
 
 #Photoperiod ----
 photoperiodDat <- read.csv(file=paste0(dataPath,'NEON_sunlightTimes.csv'),header=TRUE)

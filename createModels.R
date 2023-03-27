@@ -63,12 +63,15 @@ selectAllComDat$phenoStatus <- as.factor(selectAllComDat$phenoStatus)
 
 selectAllComDat$GDD_10 <- as.numeric(selectAllComDat$GDD_10)
 selectAllComDat$CDD_10 <- as.numeric(selectAllComDat$CDD_10)
+selectAllComDat$CDD_closest <- as.numeric(selectAllComDat$CDD_closest)
 selectAllComDat$daylength <- as.numeric(selectAllComDat$daylength)
-selectAllComDat$sumPrecip <- as.numeric(selectAllComDat$sumPrecip)
-selectAllComDat$soil_GDD_508 <- as.numeric(selectAllComDat$soil_GDD_508)
-selectAllComDat$soil_CDD_508 <- as.numeric(selectAllComDat$soil_CDD_508)
+selectAllComDat$soilMoisture <- as.numeric(selectAllComDat$`501`)
+
+#selectAllComDat$sumPrecip <- as.numeric(selectAllComDat$sumPrecip)
+#selectAllComDat$soil_GDD_508 <- as.numeric(selectAllComDat$soil_GDD_508)
+#selectAllComDat$soil_CDD_508 <- as.numeric(selectAllComDat$soil_CDD_508)
 selectAllComDat$drought <- as.numeric(selectAllComDat$drought)
-selectAllComDat$averageDrought <- as.numeric(selectAllComDat$averageDrought)
+#selectAllComDat$averageDrought <- as.numeric(selectAllComDat$averageDrought)
 
 selectAllComDat$Shade.tolerance <- as.numeric(selectAllComDat$Shade.tolerance)
 selectAllComDat$stemDiameter <- as.numeric(selectAllComDat$stemDiameter)
@@ -80,6 +83,8 @@ selectAllComDat$canopyPosition <- as.factor(selectAllComDat$canopyPosition)
 selectAllComDat$CNratio <- as.numeric(selectAllComDat$CNratio)
 selectAllComDat$field_mean_annual_temperature_C <- as.numeric(selectAllComDat$field_mean_annual_temperature_C)
 selectAllComDat$field_mean_annual_precipitation_mm <- as.numeric(selectAllComDat$field_mean_annual_precipitation_mm)
+
+selectAllComDat <- selectAllComDat %>% filter(!is.na(CDD_10))
 
 #Checking to see how often dr
 selectAllComDat <- selectAllComDat %>% filter(!is.na(drought))
@@ -116,19 +121,74 @@ hist(na.omit(subDatEcM$Good),main="EcM")
 
 dev.off()
 
+#Investigating soil moisture
+subDat <- selectAllComDat %>% filter(phenoStatus==1) %>%
+  dplyr::select(siteID,year,dayOfYear,individualID,scientificName,Mycorrhizal.type,CDD_closest,soilMoisture,height)
+
+subDat2 <- subDat %>% group_by(individualID,year,height) %>% unique() %>%
+  group_by(individualID,year,siteID,Mycorrhizal.type) %>% summarise(CDD_closest=mean(CDD_closest),soilMoisture=mean(soilMoisture))
+
+pdf(file="test.pdf",
+    width=6,height=6)
+plot(subDat2$soilMoisture,subDat2$CDD_closest,pch=20)
+mdl <- lm(CDD_closest~soilMoisture,data=subDat2)
+abline(mdl,col="red")
+mdl <- lm(CDD_closest~soilMoisture,data=subDat2[subDat2$Mycorrhizal.type=="AM",])
+abline(mdl,col="brown")
+mdl <- lm(CDD_closest~soilMoisture,data=subDat2[subDat2$Mycorrhizal.type=="EcM",])
+abline(mdl,col="cyan")
+
+subDat3 <- subDat2 %>% filter(siteID=="HARV")
+
+plot(subDat3$soilMoisture,subDat3$CDD_closest,pch=20,cex=0.1)
+points(subDat3$soilMoisture[subDat3$Mycorrhizal.type=="AM"],subDat3$CDD_closest[subDat3$Mycorrhizal.type=="AM"],pch=20,col="brown")
+points(subDat3$soilMoisture[subDat3$Mycorrhizal.type=="EcM"],subDat3$CDD_closest[subDat3$Mycorrhizal.type=="EcM"],pch=20,col="cyan")
+mdl <- lm(CDD_closest~soilMoisture,data=subDat3)
+abline(mdl,col="red")
+mdl <- lm(CDD_closest~soilMoisture,data=subDat3[subDat3$Mycorrhizal.type=="AM",])
+abline(mdl,col="brown")
+mdl <- lm(CDD_closest~soilMoisture,data=subDat3[subDat3$Mycorrhizal.type=="EcM",])
+abline(mdl,col="cyan")
+
+subDat5 <- subDat2 %>% group_by(individualID) %>% mutate(n=n()) %>% filter(n>7)
+testID="NEON.PLA.D01.HARV.06010" #EcM 
+testDatEcM <- subDat5 %>% filter(individualID==testID)
+
+testID="NEON.PLA.D01.BART.06569" #EcM 
+testDatAM <- subDat5 %>% filter(individualID==testID)
+
+plot(testDatAM$soilMoisture,testDatAM$CDD_closest,pch=20)
+mdl <- lm(CDD_closest~soilMoisture,data=testDatAM)
+abline(mdl,col="brown")
+
+plot(testDatEcM$soilMoisture,testDatEcM$CDD_closest,pch=20)
+mdl <- lm(CDD_closest~soilMoisture,data=testDatEcM)
+abline(mdl,col="cyan")
+
+
+
+
+dev.off()
+
 #Investigating if CDD difference needed for senescence between drought and no drought significantly differs between AM and EcM ----
 subDat <- selectAllComDat %>% filter(phenoStatus==1) %>%
-  dplyr::select(siteID,year,individualID,scientificName,Mycorrhizal.type,CDD_10,drought)
+  dplyr::select(siteID,year,individualID,scientificName,Mycorrhizal.type,CDD_closest,drought)
 
 subDat2 <- subDat %>% group_by(individualID,year) %>% unique() %>%
-  mutate(droughtBin=cut(drought,breaks=c(-6,-2,-1,2))) %>%
-  group_by(siteID,Mycorrhizal.type,individualID,droughtBin) %>% summarize(meanCDD=mean(CDD_10))
+  mutate(droughtBin=cut(drought,breaks=c(-6,-2,0,4))) %>%
+  group_by(siteID,Mycorrhizal.type,individualID,droughtBin) %>% summarize(meanCDD=mean(CDD_closest),n=n())
+
+
 
 subDat3 <- pivot_wider(subDat2,names_from=droughtBin,values_from=meanCDD)
 #names(subDat3) <- c('siteID',"Mycorrhizal.type","individualID",'DroughtYear',"Good","Exclude","NA")
+# names(subDat3)[names(subDat3)=="(-6,-2]"] <- "DroughtYear"
+# names(subDat3)[names(subDat3)=="(-1,4]"] <- "Good"
+# names(subDat3)[names(subDat3)=="(-2,-1]"] <- "Exclude"
+
 names(subDat3)[names(subDat3)=="(-6,-2]"] <- "DroughtYear"
-names(subDat3)[names(subDat3)=="(-1,2]"] <- "Good"
-names(subDat3)[names(subDat3)=="(-2,-1]"] <- "Exclude"
+names(subDat3)[names(subDat3)=="(0,4]"] <- "Good"
+names(subDat3)[names(subDat3)=="(-2,0]"] <- "Exclude"
 #names(subDat3) <- c('siteID',"Mycorrhizal.type","individualID","Exclude","DroughtYear","Good","NA")
 
 subDat4 <- subDat3 %>% summarize(droughtDiffCDD=Good-DroughtYear) %>% filter(!is.na(droughtDiffCDD))
@@ -140,6 +200,9 @@ length(droughtDiff_AM)
 length(droughtDiff_EcM)
 mean(droughtDiff_AM)
 mean(droughtDiff_EcM)
+
+print(sum(droughtDiff_AM>0)/length(droughtDiff_AM))
+print(sum(droughtDiff_EcM>0)/length(droughtDiff_EcM))
 t.test(droughtDiff_AM,droughtDiff_EcM)
 
 yesData <- selectAllComDat %>% filter(phenoStatus=="1",siteID=="HARV")
