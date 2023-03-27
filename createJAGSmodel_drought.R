@@ -8,8 +8,8 @@ set.seed(0)
 #Load and Organize Data ----
 p=3
 load(file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData")) #Loaded as allComDat
-
-selectAllComDat <- allComDat %>% filter(Mycorrhizal.type%in%c("AM","EcM"))
+allComDat$phenoStatus <- as.numeric(as.character(allComDat$phenoStatus))
+selectAllComDat <- allComDat %>% filter(Mycorrhizal.type%in%c("AM","EcM"),!is.na(soilMoisture))
 
 subSelectAllComDat <- selectAllComDat[sample.int(nrow(selectAllComDat),10000,replace=FALSE),]
 
@@ -57,26 +57,26 @@ generalModel = "
 model {
 #### Process Model
 for(i in 1:N){
-CDDCrit[i] ~ dnorm(CDDCrit_mean,CDDCrit_tau) #Random effect
+#CDDCrit[i] ~ dnorm(CDDCrit_mean,CDDCrit_tau) #Random effect
+k[i] ~ dnorm(k_mean,k_tau) #Random effect
 for(j in 1:numObs[i]){    
-phenoProb[i,j] <- ifelse(CDD[i,j]>CDDCrit[i],p,(1-p)) #1 for senescence and 0 for no
+phenoProb[i,j] <- ifelse(CDD[i,j]>CDDCrit[i,j],p,(1-p)) #1 for senescence and 0 for no
 phenoStatus[i,j] ~ dbern(phenoProb[i,j]) 
+CDDCrit[i,j] <- exp(k[i]*(drought[i,j]))
 }
 }
-
-#CDDCrit[i] <- exp(k*(drought[i]))
 
 #### Priors
-#k ~ dunif(0.01,1)
+k_mean ~ dunif(0.01,10)
+k_tau ~ dunif(0.1,50)
 #CDDmean ~ dunif(0,1000)
 #tau ~ dunif(0,0.01)
 #CDDCrit ~dunif(0,400)
-CDDCrit_mean ~ dunif(0,400)
-CDDCrit_tau ~ dunif(0,0.00001)
+#CDDCrit_mean ~ dunif(0,400)
+#CDDCrit_tau ~ dunif(0,0.00001)
 p ~ dbeta(10,1)
 }
 "
-
 
 #Run Model ----
 nchain=5
@@ -84,7 +84,8 @@ j.model   <- jags.model(file = textConnection(generalModel),
                         data = JAGSdat,
                         n.chains = nchain)
 #variableNames <- c("p.proc","b0","b1","x")
-variableNames <- c("CDDCrit_mean","CDDCrit_tau","p")
+#variableNames <- c("CDDCrit_mean","CDDCrit_tau","p")
+variableNames <- c("k_mean","k_tau","k","p")
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
                           baseNum = 50000,iterSize = 10000)
