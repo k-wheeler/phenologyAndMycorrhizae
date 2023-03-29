@@ -35,13 +35,31 @@ phenoDat <- phenoDat %>%
   group_by(siteID,year,date,dayOfYear,individualID,phenoStatus,canopyPosition,plantStatus,height,scientificName,
            growthForm, Mycorrhizal.type) %>% slice(1:1)
 
+#Spring Dates to Calculate Leaf Age ----
+p=2
+springDat <- read.csv(file=paste0(dataPath,'NEON_PhenologyObservations/NEON_PhenoObservationData_AllStatus_',gsub(" ","",NEON_phenophase_names[p]),'.csv'))
+springDat$phenoStatus <- "no"
+# springDat$phenoStatus[springDat$phenophaseIntensity %in% 
+#                         c("11 to 100")] <- "yes"
+springDat$phenoStatus[springDat$phenophaseIntensity %in%
+                        c("11 to 100","101 to 1000","1001 to 10000",">10000")] <- "yes"
+
+subPhenoDat <- springDat %>% filter(phenoStatus=="yes") %>%
+  group_by(year,individualID,height) %>% dplyr::slice(1:1) %>%
+  dplyr::select(individualID,year,height,dayOfYear) %>% mutate(year=as.numeric(year),
+                                                               springDayOfYear=dayOfYear,
+                                                               dayOfYear=NULL)
+
+allComDat <- left_join(phenoDat,subPhenoDat,by=c('individualID','year','height'))
+#allComDat <- left_join(allComDat,subPhenoDat,by=c('individualID','year','height'))
+p=3
 #NEON Soil Physical and Chemical Properties ----
 dataName <- "NEON_soilProperties"
 outFileName <- paste0(dataName,"ALLdata.csv")
 soilPropDat <- read.csv(file=paste0(dataPath,outFileName))
 soilPropDat <- soilPropDat %>% dplyr::select(-c(decimalLatitude,decimalLongitude,elevation))
 
-allComDat <- left_join(phenoDat,soilPropDat,by=c('siteID','year'))
+allComDat <- left_join(allComDat,soilPropDat,by=c('siteID','year'))
 print("loaded soilProp")
 
 #NEON Single Air Temp at Various Heights ----
