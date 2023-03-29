@@ -11,13 +11,6 @@ allComDat$phenoStatus <- as.numeric(as.character(allComDat$phenoStatus))
 selectAllComDat <- allComDat %>% filter(!is.na(soilMoisture),siteID=="HARV")
 
 subSelectAllComDat <- selectAllComDat[sample.int(nrow(selectAllComDat),10000,replace=FALSE),]
-allSunlightTimes <- read.csv(file=paste0(dataPath,'NEON_sunlightTimes.csv'))
-siteMaxDaylength <- allSunlightTimes %>% group_by(siteID) %>% 
-  summarize(maxDayLength=max(daylength))
-subSelectAllComDat <- left_join(subSelectAllComDat,siteMaxDaylength,by="siteID") %>%
-  mutate(pRatio=daylength/maxDayLength)
-
-subSelectAllComDat$CDDp <- subSelectAllComDat$CDD_closest * subSelectAllComDat$pRatio
 
 drought <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$soilMoisture)
 colnames(drought) <- c("scientificName","drought")
@@ -109,28 +102,16 @@ variableNames <- c("CDDCrit","CDDCrit_mean","CDDCrit_tau","p")
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
                           baseNum = 10000,iterSize = 5000)
 save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
+load(file="DM_HARV_JAGS_varBurn.RData")
 out.mat <- as.data.frame(as.matrix(out.burn))
-# 
-# pdf(file="test.pdf",
-#     width=6,height=6)
-# plot(density(out.mat$k_mean))
-# plot(density(out.mat$k_tau))
-# plot(density(out.mat$p))
-# plot(density(out.mat$'k[1]'))
-# plot(density(out.mat$'k[10]'))
-# plot(density(out.mat$'k[20]'))
-# plot(density(out.mat$'k[30]'))
-# plot(density(out.mat$'k[40]'))
-# plot(density(out.mat$'k[51]'))
-# plot(density(out.mat$'k[61]'))
-# plot(density(out.mat$'k[81]'))
-# plot(density(out.mat$'k[101]'))
-# plot(density(out.mat$'k[121]'))
-# plot(density(out.mat$'k[141]'))
-# plot(density(out.mat$'k[161]'))
-# plot(density(out.mat$'k[181]'))
-# plot(density(out.mat$'k[201]'))
-# plot(density(out.mat$'k[241]'))
-# plot(density(out.mat$'k[261]'))
-# plot(density(out.mat$'k[301]'))
-# dev.off()
+
+pdf(file="DM_HARV_parameterDensities.pdf",
+    width=6,height=6)
+plot(density(out.mat$CDDCrit_mean))
+plot(density(out.mat$CDDCrit_tau))
+plot(density(out.mat$p))
+plot(density(out.mat$'CDDCrit[1]'))
+plot(density(out.mat$'CDDCrit[2]'))
+plot(density(out.mat$'CDDCrit[5]'))
+
+dev.off()

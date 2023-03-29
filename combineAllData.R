@@ -225,4 +225,13 @@ allComDat$X1=allComDat$X2=allComDat$X3=allComDat$X4=
   allComDat$X5=allComDat$X6=allComDat$X7=allComDat$X8=
   allComDat$X9=allComDat$X10=allComDat$X11=allComDat$X12<- NULL
 
+#Edit by Adding CDD*daylength ratio ----
+allSunlightTimes <- read.csv(file=paste0(dataPath,'NEON_sunlightTimes.csv'))
+siteMaxDaylength <- allSunlightTimes %>% group_by(siteID) %>% 
+  summarize(maxDayLength=max(daylength))
+allComDat <- left_join(allComDat,siteMaxDaylength,by="siteID") %>%
+  mutate(pRatio=daylength/maxDayLength)
+
+allComDat$CDDp <- allComDat$CDD_closest * allComDat$pRatio
+
 save(allComDat,file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData"))
