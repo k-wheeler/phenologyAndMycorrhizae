@@ -48,8 +48,8 @@ yCritPriorValues <- read.csv('archettiYcritValues.csv')
 #plot(density(yCritPriorValues$Ycrit))
 priorMean=mean(yCritPriorValues$Ycrit)
 priorVar=var(yCritPriorValues$Ycrit) #Inflate variance for out of sample
-JAGSdat$CDD_mean_shape=priorMean**2/priorVar #k in JAGS
-JAGSdat$CDD_mean_scale=priorVar/priorMean #theta in JAGS
+JAGSdat$CDD_mean_shape=priorMean/priorVar #k in JAGS
+JAGSdat$CDD_mean_rate=(priorMean**2)/priorVar #theta in JAGS
 
 
 # yesData <- selectAllComDat %>% filter(phenoStatus=="1",drought<1,CDD_10>0)
@@ -66,7 +66,7 @@ generalModel = "
 model {
 #### Process Model
 for(i in 1:N){
-CDDCrit[i] ~ dgamma(CDD_mean_shape,CDD_mean_scale) #Random effect
+CDDCrit[i] ~ dgamma(CDD_mean_shape,CDD_mean_rate) #Random effect
 #k[i] ~ dnorm(k_mean,k_tau) #Random effect
 
 for(j in 1:numObs[i]){    
@@ -83,7 +83,7 @@ phenoStatus[i,j] ~ dbern(phenoProb[i,j])
 #tau ~ dunif(0,0.01)
 #CDDCrit ~dunif(0,400)
 
-p ~ dbeta(10,1) T(0.5,1)
+p ~ dbeta(10,1)
 }
 "
 
@@ -97,11 +97,11 @@ variableNames <- c("CDDCrit","p")
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
                           baseNum = 10000,iterSize = 5000)
-save(out.burn,file="DM_HARV_JAGS_varBurn2.RData")
-load(file="DM_HARV_JAGS_varBurn3.RData")
+save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
+load(file="DM_HARV_JAGS_varBurn.RData")
 out.mat <- as.data.frame(as.matrix(out.burn))
 
-pdf(file="DM_HARV_parameterDensities3.pdf",
+pdf(file="DM_HARV_parameterDensities.pdf",
     width=6,height=6)
 plot(density(out.mat$p))
 plot(density(out.mat$'CDDCrit[1]'))
