@@ -6,6 +6,8 @@ set.seed(0)
 
 #Load and Organize Data ----
 p=3
+nchain=5
+
 load(file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData")) #Loaded as allComDat
 allComDat$phenoStatus <- as.numeric(as.character(allComDat$phenoStatus))
 selectAllComDat <- allComDat %>% filter(!is.na(soilMoisture),siteID=="HARV")
@@ -45,11 +47,9 @@ JAGSdat <- list(drought=matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought)
 yCritPriorValues <- read.csv('archettiYcritValues.csv')
 #plot(density(yCritPriorValues$Ycrit))
 priorMean=mean(yCritPriorValues$Ycrit)
-priorVar=var(yCritPriorValues$Ycrit)
+priorVar=var(yCritPriorValues$Ycrit)*10 #Inflate variance for out of sample
 JAGSdat$CDD_mean_shape=priorMean**2/priorVar #k in JAGS
 JAGSdat$CDD_mean_scale=priorVar/priorMean #theta in JAGS
-JAGSdat$CDD_tau_lower <- 0
-JAGSdat$CDD_tau_upper <- 1/(priorVar*30) #inflated by a lot because of limited range of prior data
 
 
 # yesData <- selectAllComDat %>% filter(phenoStatus=="1",drought<1,CDD_10>0)
@@ -66,7 +66,7 @@ generalModel = "
 model {
 #### Process Model
 for(i in 1:N){
-CDDCrit[i] ~ dnorm(CDDCrit_mean,CDDCrit_tau) #Random effect
+CDDCrit[i] ~ dgamma(CDD_mean_shape,CDD_mean_scale) #Random effect
 #k[i] ~ dnorm(k_mean,k_tau) #Random effect
 
 for(j in 1:numObs[i]){    
@@ -83,35 +83,31 @@ phenoStatus[i,j] ~ dbern(phenoProb[i,j])
 #tau ~ dunif(0,0.01)
 #CDDCrit ~dunif(0,400)
 
-CDDCrit_mean ~ dgamma(CDD_mean_shape,CDD_mean_scale)
-CDDCrit_tau ~ dunif(CDD_tau_lower,CDD_tau_upper)
-
 p ~ dbeta(10,1)
 }
 "
 
 #Run Model ----
-nchain=5
 j.model   <- jags.model(file = textConnection(generalModel),
                         data = JAGSdat,
                         n.chains = nchain)
 #variableNames <- c("p.proc","b0","b1","x")
 #variableNames <- c("CDDCrit_mean","CDDCrit_tau","p")
-variableNames <- c("CDDCrit","CDDCrit_mean","CDDCrit_tau","p")
+variableNames <- c("CDDCrit","p")
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
-                          baseNum = 10000,iterSize = 5000)
+                          baseNum = 10000,iterSize = 50000)
 save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
-load(file="DM_HARV_JAGS_varBurn.RData")
-out.mat <- as.data.frame(as.matrix(out.burn))
-
-pdf(file="DM_HARV_parameterDensities.pdf",
-    width=6,height=6)
-plot(density(out.mat$CDDCrit_mean))
-plot(density(out.mat$CDDCrit_tau))
-plot(density(out.mat$p))
-plot(density(out.mat$'CDDCrit[1]'))
-plot(density(out.mat$'CDDCrit[2]'))
-plot(density(out.mat$'CDDCrit[5]'))
-
-dev.off()
+# load(file="DM_HARV_JAGS_varBurn.RData")
+# out.mat <- as.data.frame(as.matrix(out.burn))
+# 
+# pdf(file="DM_HARV_parameterDensities.pdf",
+#     width=6,height=6)
+# plot(density(out.mat$CDDCrit_mean))
+# plot(density(out.mat$CDDCrit_tau))
+# plot(density(out.mat$p))
+# plot(density(out.mat$'CDDCrit[1]'))
+# plot(density(out.mat$'CDDCrit[2]'))
+# plot(density(out.mat$'CDDCrit[5]'))
+# 
+# dev.off()
