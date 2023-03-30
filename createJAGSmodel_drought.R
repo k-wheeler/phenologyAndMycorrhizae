@@ -83,7 +83,7 @@ phenoStatus[i,j] ~ dbern(phenoProb[i,j])
 #tau ~ dunif(0,0.01)
 #CDDCrit ~dunif(0,400)
 
-p ~ dbeta(10,1)
+p ~ dbeta(10,1) T(0.5,1)
 }
 "
 
@@ -98,16 +98,29 @@ variableNames <- c("CDDCrit","p")
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
                           baseNum = 10000,iterSize = 5000)
 save(out.burn,file="DM_HARV_JAGS_varBurn2.RData")
-# load(file="DM_HARV_JAGS_varBurn.RData")
-# out.mat <- as.data.frame(as.matrix(out.burn))
-# 
-# pdf(file="DM_HARV_parameterDensities.pdf",
-#     width=6,height=6)
+load(file="DM_HARV_JAGS_varBurn3.RData")
+out.mat <- as.data.frame(as.matrix(out.burn))
+
+pdf(file="DM_HARV_parameterDensities3.pdf",
+    width=6,height=6)
+plot(density(out.mat$p))
+plot(density(out.mat$'CDDCrit[1]'))
+plot(density(out.mat$'CDDCrit[2]'))
+plot(density(out.mat$'CDDCrit[3]'))
+plot(density(out.mat$'CDDCrit[4]'))
+plot(density(out.mat$'CDDCrit[5]'))
+plot(density(out.mat$'CDDCrit[6]'))
+plot(density(out.mat$'CDDCrit[7]'))
+plot(density(out.mat$'CDDCrit[8]'))
+plot(density(out.mat$'CDDCrit[9]'))
+plot(density(out.mat$'CDDCrit[10]'))
+plot(density(out.mat$'CDDCrit[11]'))
+
 # plot(density(out.mat$CDDCrit_mean))
 # plot(density(out.mat$CDDCrit_tau))
 # plot(density(out.mat$p))
 # plot(density(out.mat$'CDDCrit[1]'))
 # plot(density(out.mat$'CDDCrit[2]'))
 # plot(density(out.mat$'CDDCrit[5]'))
-# 
-# dev.off()
+
+dev.off()
