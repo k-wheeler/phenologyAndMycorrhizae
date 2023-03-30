@@ -47,7 +47,7 @@ JAGSdat <- list(drought=matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought)
 yCritPriorValues <- read.csv('archettiYcritValues.csv')
 #plot(density(yCritPriorValues$Ycrit))
 priorMean=mean(yCritPriorValues$Ycrit)
-priorVar=var(yCritPriorValues$Ycrit)*10 #Inflate variance for out of sample
+priorVar=var(yCritPriorValues$Ycrit) #Inflate variance for out of sample
 JAGSdat$CDD_mean_shape=priorMean**2/priorVar #k in JAGS
 JAGSdat$CDD_mean_scale=priorVar/priorMean #theta in JAGS
 
@@ -96,8 +96,8 @@ j.model   <- jags.model(file = textConnection(generalModel),
 variableNames <- c("CDDCrit","p")
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
-                          baseNum = 10000,iterSize = 50000)
-save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
+                          baseNum = 10000,iterSize = 5000)
+save(out.burn,file="DM_HARV_JAGS_varBurn2.RData")
 # load(file="DM_HARV_JAGS_varBurn.RData")
 # out.mat <- as.data.frame(as.matrix(out.burn))
 # 
