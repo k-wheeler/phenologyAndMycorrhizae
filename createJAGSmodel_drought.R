@@ -96,7 +96,7 @@ j.model   <- jags.model(file = textConnection(generalModel),
 variableNames <- c("CDDCrit","p")
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
-                          baseNum = 10000,iterSize = 5000)
+                          baseNum = 10000,iterSize = 10000,maxGBR=30)
 save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
 load(file="DM_HARV_JAGS_varBurn.RData")
 out.mat <- as.data.frame(as.matrix(out.burn))
