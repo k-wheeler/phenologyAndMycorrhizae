@@ -36,11 +36,16 @@ numObs <- left_join(phenoStatus,numObs,by="scientificName")
 numObs <- numObs$n
 
 phenoStatus$scientificName <- NULL
+includeRow <- logical()
+for(i in 1:nrow(phenoStatus)){
+  includeRow <- c(includeRow,
+                  (sum(na.omit(as.numeric(as.character(phenoStatus[i,])))==1)>4))
+}
 
-JAGSdat <- list(drought=matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought)),
-                CDDp=matrix(as.numeric(as.matrix(CDDp)),ncol=ncol(CDDp)),
-                phenoStatus=matrix(as.numeric(as.matrix(phenoStatus)),ncol=ncol(phenoStatus)),
-                N=length(numObs),
+JAGSdat <- list(drought=matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought))[includeRow,],
+                CDDp=matrix(as.numeric(as.matrix(CDDp)),ncol=ncol(CDDp))[includeRow,],
+                phenoStatus=matrix(as.numeric(as.matrix(phenoStatus)),ncol=ncol(phenoStatus))[includeRow,],
+                N=sum(includeRow),
                 numObs=numObs
                 )
 
@@ -101,26 +106,42 @@ save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
 load(file="DM_HARV_JAGS_varBurn.RData")
 out.mat <- as.data.frame(as.matrix(out.burn))
 
-pdf(file="DM_HARV_parameterDensities.pdf",
-    width=6,height=6)
-plot(density(out.mat$p))
-plot(density(out.mat$'CDDCrit[1]'))
-plot(density(out.mat$'CDDCrit[2]'))
-plot(density(out.mat$'CDDCrit[3]'))
-plot(density(out.mat$'CDDCrit[4]'))
-plot(density(out.mat$'CDDCrit[5]'))
-plot(density(out.mat$'CDDCrit[6]'))
-plot(density(out.mat$'CDDCrit[7]'))
-plot(density(out.mat$'CDDCrit[8]'))
-plot(density(out.mat$'CDDCrit[9]'))
-plot(density(out.mat$'CDDCrit[10]'))
-plot(density(out.mat$'CDDCrit[11]'))
-
-# plot(density(out.mat$CDDCrit_mean))
-# plot(density(out.mat$CDDCrit_tau))
+# pdf(file="DM_HARV_parameterDensities.pdf",
+#     width=6,height=6)
 # plot(density(out.mat$p))
 # plot(density(out.mat$'CDDCrit[1]'))
 # plot(density(out.mat$'CDDCrit[2]'))
+# plot(density(out.mat$'CDDCrit[3]'))
+# plot(density(out.mat$'CDDCrit[4]'))
 # plot(density(out.mat$'CDDCrit[5]'))
+# plot(density(out.mat$'CDDCrit[6]'))
+# plot(density(out.mat$'CDDCrit[7]'))
+# plot(density(out.mat$'CDDCrit[8]'))
+# plot(density(out.mat$'CDDCrit[9]'))
+# plot(density(out.mat$'CDDCrit[10]'))
+# plot(density(out.mat$'CDDCrit[11]'))
+# 
+# # plot(density(out.mat$CDDCrit_mean))
+# # plot(density(out.mat$CDDCrit_tau))
+# # plot(density(out.mat$p))
+# # plot(density(out.mat$'CDDCrit[1]'))
+# # plot(density(out.mat$'CDDCrit[2]'))
+# # plot(density(out.mat$'CDDCrit[5]'))
+# 
+# dev.off()
+# 
+# pdf(file="CDDrelationships.pdf",
+#     width=6,height=6)
+# for(i in 1:11){
+#   print(i)
+#   ids <- which(JAGSdat$phenoStatus[i,]==1)
+#   print(paste0("length yes:",length(na.omit(JAGSdat$CDDp[i,-ids]))))
+#   print(paste0("length no:",length(ids)))
+#   if(length(ids)>1){
+#     plot(density(na.omit(JAGSdat$CDDp[i,-ids])),xlim=range(JAGSdat$CDDp[i,],na.rm=TRUE))
+#     lines(density(na.omit(JAGSdat$CDDp[i,ids])),col="orange")
+#   }
+# }
+# dev.off()
 
-dev.off()
+
