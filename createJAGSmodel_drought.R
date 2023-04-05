@@ -168,17 +168,17 @@ phenoStatus[i,j] ~ dbern(phenoProb[i,j])
 #tau ~ dunif(0,0.01)
 #CDDCrit ~dunif(0,400)
 
-p ~ dbeta(10,1)
+p ~ dbeta(10,1) T(0.5,1)
 }
 "
 
 inits <- list()
-# for(i in 1:nchain){
-#   inits[[i]] <- list(p=rnorm(1,0.9,0.001),CDDCrit=rnorm(JAGSdat$N,priorMean,10))
-# }
 for(i in 1:nchain){
-  inits[[i]] <- list(p=rnorm(1,0.9,0.001),k=rnorm(1,-1,0.1))
+  inits[[i]] <- list(p=rnorm(1,0.9,0.001),CDDCrit=rnorm(JAGSdat$N,priorMean,10))
 }
+# for(i in 1:nchain){
+#   inits[[i]] <- list(p=rnorm(1,0.9,0.001),k=rnorm(1,-1,0.1))
+# }
 
 #Run Model ----
 j.model   <- jags.model(file = textConnection(generalModel),
@@ -191,7 +191,7 @@ variableNames <- c("CDDCrit","p")
 # 
 # var.out   <- coda.samples (model = j.model,
 #                            variable.names = variableNames,
-#                            n.iter = 10000)
+#                            n.iter = 1000)
 # pdf(file="fuzzyCaterpillers2.pdf",
 #     width=6,height=6)
 # plot(var.out)
