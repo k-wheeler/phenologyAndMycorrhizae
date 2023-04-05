@@ -118,16 +118,18 @@ t.test(droughtDiff_AM,droughtDiff_EcM)
 #Drought tolerance vs change ----
 subDat <- allComDat %>% filter(phenoStatus==1) %>%
   dplyr::select(siteID,year,daylength,individualID,scientificName,Mycorrhizal.type,
-                drought,soilMoisture,height,canopyPosition,springDayOfYear,dayOfYear,Drought.tolerance,CDD_closest) %>%
+                drought,soilMoisture,height,canopyPosition,springDayOfYear,dayOfYear,Drought.tolerance,CDD_closest,CDDp) %>%
   mutate(leafAge=dayOfYear-springDayOfYear)
 
-subDat2 <- subDat %>% group_by(individualID,year,height,Drought.tolerance,scientificName) %>% 
-  filter(!is.na(leafAge)) %>% unique() %>%
+subDat <- subDat %>% group_by(individualID,year,height,Drought.tolerance,scientificName) %>% 
+  filter(!is.na(leafAge),!is.na(CDD_closest),!is.na(CDDp)) %>% unique() %>%
   mutate(droughtBin=cut(drought,breaks=c(-6,-2,0,8))) %>%
-  group_by(siteID,Mycorrhizal.type,individualID,droughtBin,Drought.tolerance,scientificName) %>% 
-  summarize(meanLeafAge=mean(leafAge),n=n())
+  group_by(siteID,Mycorrhizal.type,individualID,droughtBin,Drought.tolerance,scientificName)
 
-subDat3 <- pivot_wider(subDat2,names_from=droughtBin,values_from=meanLeafAge)
+subDat2 <- subDat %>% 
+  summarize(meanLeafAge=mean(leafAge),meanCDD=mean(CDD_closest),meanCDDp=mean(CDDp),n=n())
+
+subDat3 <- subDat2 %>% dplyr::select(-c('meanCDD','meanCDDp')) %>% pivot_wider(names_from=droughtBin,values_from=meanLeafAge)
 
 names(subDat3)[names(subDat3)=="(-6,-2]"] <- "DroughtYear"
 names(subDat3)[names(subDat3)=="(0,8]"] <- "Good"
@@ -136,23 +138,20 @@ names(subDat3)[names(subDat3)=="(-2,0]"] <- "Exclude"
 subDat4 <- subDat3 %>% mutate(droughtDiffDOY=Good-DroughtYear) %>% filter(!is.na(droughtDiffDOY))
 
 pdf(file=paste0("ChangeLeafAgeVsDroughtTolerance.pdf"),
-    width=6,height=6)
-plot(subDat4$Drought.tolerance,subDat4$droughtDiffDOY,pch=20,main="LeafAge")
+    width=4,height=12)
+par(mfrow=c(3,1))
+plot(subDat4$Drought.tolerance,subDat4$droughtDiffDOY,pch=20,
+     main="a) Age of Leaves",xlab="",ylab="Change in Age (Days)",bty="n")
 points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="AM"],
        subDat4$droughtDiffDOY[subDat4$Mycorrhizal.type=="AM"],pch=20,col="brown")
 points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="EcM"],
        subDat4$droughtDiffDOY[subDat4$Mycorrhizal.type=="EcM"],pch=20,col="cyan")
 mdl <- lm(droughtDiffDOY~Drought.tolerance,data=subDat4)
-abline(mdl,col="red")
+abline(mdl,col="red",lwd=3)
 print(summary(mdl))
+legend('topright',c("AM","EcM","Other"),col=c("brown","cyan","black"),pch=20,bty = "n",cex=1.5)
 
-subDat2 <- subDat %>% group_by(individualID,year,height,Drought.tolerance,scientificName) %>% 
-  filter(!is.na(CDD_closest)) %>% unique() %>%
-  mutate(droughtBin=cut(drought,breaks=c(-6,-2,0,8))) %>%
-  group_by(siteID,Mycorrhizal.type,individualID,droughtBin,Drought.tolerance,scientificName) %>% 
-  summarize(meanCDD=mean(CDD_closest),n=n())
-
-subDat3 <- pivot_wider(subDat2,names_from=droughtBin,values_from=meanCDD)
+subDat3 <- subDat2 %>% dplyr::select(-c('meanLeafAge','meanCDDp')) %>% pivot_wider(names_from=droughtBin,values_from=meanCDD)
 
 names(subDat3)[names(subDat3)=="(-6,-2]"] <- "DroughtYear"
 names(subDat3)[names(subDat3)=="(0,8]"] <- "Good"
@@ -160,13 +159,30 @@ names(subDat3)[names(subDat3)=="(-2,0]"] <- "Exclude"
 
 subDat4 <- subDat3 %>% mutate(droughtDiffCDD=Good-DroughtYear) %>% filter(!is.na(droughtDiffCDD))
 
-plot(subDat4$Drought.tolerance,subDat4$droughtDiffCDD,pch=20,main="CDD")
+plot(subDat4$Drought.tolerance,subDat4$droughtDiffCDD,pch=20,main="b) CDD",xlab="",ylab="Change in CDD (Degrees C)",bty="n")
 points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="AM"],
        subDat4$droughtDiffCDD[subDat4$Mycorrhizal.type=="AM"],pch=20,col="brown")
 points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="EcM"],
        subDat4$droughtDiffCDD[subDat4$Mycorrhizal.type=="EcM"],pch=20,col="cyan")
 mdl <- lm(droughtDiffCDD~Drought.tolerance,data=subDat4)
-abline(mdl,col="red")
+abline(mdl,col="red",lwd=3)
+print(summary(mdl))
+
+subDat3 <- subDat2 %>% dplyr::select(-c('meanLeafAge','meanCDD')) %>% pivot_wider(names_from=droughtBin,values_from=meanCDDp)
+
+names(subDat3)[names(subDat3)=="(-6,-2]"] <- "DroughtYear"
+names(subDat3)[names(subDat3)=="(0,8]"] <- "Good"
+names(subDat3)[names(subDat3)=="(-2,0]"] <- "Exclude"
+
+subDat4 <- subDat3 %>% mutate(droughtDiffCDD=Good-DroughtYear) %>% filter(!is.na(droughtDiffCDD))
+
+plot(subDat4$Drought.tolerance,subDat4$droughtDiffCDD,pch=20,main="c) CDD x Day Length Ratio",xlab="Species Drought Tolerance",ylab="Change in Ycrit (Degrees C x Hours)",bty="n")
+points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="AM"],
+       subDat4$droughtDiffCDD[subDat4$Mycorrhizal.type=="AM"],pch=20,col="brown")
+points(subDat4$Drought.tolerance[subDat4$Mycorrhizal.type=="EcM"],
+       subDat4$droughtDiffCDD[subDat4$Mycorrhizal.type=="EcM"],pch=20,col="cyan")
+mdl <- lm(droughtDiffCDD~Drought.tolerance,data=subDat4)
+abline(mdl,col="red",lwd=3)
 print(summary(mdl))
 
 dev.off()
