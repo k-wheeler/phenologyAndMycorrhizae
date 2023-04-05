@@ -14,57 +14,61 @@ nchain=5
 
 load(file=paste0("allCombinedNEONDat_",gsub(" ","",NEON_phenophase_names[p]),".RData")) #Loaded as allComDat
 allComDat$phenoStatus <- as.numeric(as.character(allComDat$phenoStatus))
-selectAllComDat <- allComDat %>% filter(!is.na(soilMoisture))#,siteID=="HARV")
+selectAllComDat <- allComDat %>% filter(!is.na(soilMoisture),siteID=="HARV",!is.na(CDDp))
 
 subSelectAllComDat <- selectAllComDat
 
-siteIDs <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$siteID)
-colnames(siteIDs) <- c("scientificName","siteIDs")
-siteIDs=as.data.frame(siteIDs) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+siteIDs <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$siteID)
+colnames(siteIDs) <- c("individualID","siteIDs")
+siteIDs=as.data.frame(siteIDs) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=siteIDs)
-siteIDs$scientificName <- NULL
+siteIDs$individualID <- NULL
 
-drought <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$soilMoisture)
-colnames(drought) <- c("scientificName","drought")
-drought=as.data.frame(drought) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+drought <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$soilMoisture)
+colnames(drought) <- c("individualID","drought")
+drought=as.data.frame(drought) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=drought)
-drought$scientificName <- NULL
+drought$individualID <- NULL
 
-dates <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$date)
-colnames(dates) <- c("scientificName","dates")
-dates=as.data.frame(dates) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+dates <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$date)
+colnames(dates) <- c("individualID","dates")
+dates=as.data.frame(dates) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=dates)
-dates$scientificName <- NULL
+dates$individualID <- NULL
 
-daylength <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$daylength)
-colnames(daylength) <- c("scientificName","daylength")
-daylength=as.data.frame(daylength) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+daylength <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$daylength)
+colnames(daylength) <- c("individualID","daylength")
+daylength=as.data.frame(daylength) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=daylength)
-daylength$scientificName <- NULL
+daylength$individualID <- NULL
 
 
-CDDp <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$CDDp)
-colnames(CDDp) <- c("scientificName","CDDp")
-CDDp=as.data.frame(CDDp) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+CDDp <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$CDDp)
+colnames(CDDp) <- c("individualID","CDDp")
+CDDp=as.data.frame(CDDp) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=CDDp)
-CDDp$scientificName <- NULL
+CDDp$individualID <- NULL
 
-phenoStatus <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$phenoStatus)
-colnames(phenoStatus) <- c("scientificName","phenoStatus")
-numObs <- as.data.frame(phenoStatus) %>% group_by(scientificName) %>% summarize(n=n())
+phenoStatus <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$phenoStatus)
+colnames(phenoStatus) <- c("individualID","phenoStatus")
+numObs <- as.data.frame(phenoStatus) %>% group_by(individualID) %>% summarize(n=n())
 
-phenoStatus=as.data.frame(phenoStatus) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
+phenoStatus=as.data.frame(phenoStatus) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
   pivot_wider(names_from=rowNum,values_from=phenoStatus)
-numObs <- left_join(phenoStatus,numObs,by="scientificName")
+numObs <- left_join(phenoStatus,numObs,by="individualID")
 numObs <- numObs$n
 
-phenoStatus$scientificName <- NULL
+phenoStatus$individualID <- NULL
 includeRow <- logical()
 for(i in 1:nrow(phenoStatus)){
   print(sum(na.omit(as.numeric(as.character(phenoStatus[i,])))==1))
   includeRow <- c(includeRow,
-                  (sum(na.omit(as.numeric(as.character(phenoStatus[i,])))==1)>4))
+                  (sum(na.omit(as.numeric(as.character(phenoStatus[i,])))==1)>100))
 }
+sampleRow <- sample(which(includeRow),20,replace=FALSE)
+includeRow <- rep(FALSE,length(includeRow))
+includeRow[sampleRow] <- TRUE
+
 siteIDs=(matrix(as.numeric(as.matrix(siteIDs)),ncol=ncol(siteIDs))[includeRow,])
 drought=(matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought))[includeRow,])
 CDDp=matrix(as.numeric(as.matrix(CDDp)),ncol=ncol(CDDp))[includeRow,]
@@ -76,7 +80,7 @@ JAGSdat <- list(drought=drought,
                 CDDp=CDDp,
                 phenoStatus=phenoStatus,
                 N=sum(includeRow),
-                numObs=numObs,
+                numObs=numObs[includeRow],
                 daylength=daylength,
                 siteID=siteIDs
                 )
@@ -88,51 +92,49 @@ priorVar=var(yCritPriorValues$Ycrit) #Inflate variance for out of sample
 JAGSdat$CDD_mean_shape=priorMean/priorVar #k in JAGS
 JAGSdat$CDD_mean_rate=(priorMean**2)/priorVar #theta in JAGS
 
-
-
-#Investigating why There seems to be multiple modes in the CDDp values ----
-CDDp <- cbind(subSelectAllComDat$scientificName,subSelectAllComDat$CDD_closest)
-colnames(CDDp) <- c("scientificName","CDDp")
-CDDp=as.data.frame(CDDp) %>% group_by(scientificName) %>% mutate(rowNum=row_number()) %>%
-  pivot_wider(names_from=rowNum,values_from=CDDp)
-speciesToTest <- CDDp$scientificName[includeRow]
-
-subSelectAllComDat <- selectAllComDat %>% dplyr::select(siteID,year,individualID,canopyPosition,height,
-                                                        daylength,drought,averageDrought,springDayOfYear,
-                                                        soilMoisture,CDD_closest,scientificName,phenoStatus) %>%
-  filter(!is.na(year),!is.na(individualID),!is.na(canopyPosition),!is.na(height),
-         !is.na(daylength),!is.na(drought),!is.na(averageDrought),!is.na(springDayOfYear),
-         !is.na(soilMoisture),!is.na(CDD_closest),!is.na(scientificName))
-j <- which(names(subSelectAllComDat)=="CDD_closest")
-pdf(file="speciesCDD_rf3.pdf",
-    width=6,height=6)
-for(s in seq_along(speciesToTest)){
-  subDat <- subSelectAllComDat %>% filter(scientificName==speciesToTest[s],phenoStatus==1)
-  if(nrow(subDat)>5){
-    print(s)
-    rf <- randomForest(CDD_closest ~ ., data=subDat)
-    randomForest::varImpPlot(rf)
-    plot(subDat$soilMoisture,subDat$CDD_closest,pch=20,main=speciesToTest[s])
-    partialPlot(x=rf,pred.data=data.frame(subDat),x.var="daylength")
-    partialPlot(x=rf,pred.data=data.frame(subDat),x.var="soilMoisture")
-  }
-}
-dev.off()
-
-
-
-  subDat <- subSelectAllComDat %>% filter(phenoStatus==1)
-
-    rf <- randomForest(CDD_closest ~ ., data=subDat)
-    
-    pdf(file="CDD_rf.pdf",
-        width=6,height=6)
-    randomForest::varImpPlot(rf)
-    #plot(subDat$soilMoisture,subDat$CDD_closest,pch=20,main=speciesToTest[s])
-    partialPlot(x=rf,pred.data=data.frame(subDat),x.var="daylength")
-    partialPlot(x=rf,pred.data=data.frame(subDat),x.var="soilMoisture")
-    
-    dev.off()
+# #Investigating why There seems to be multiple modes in the CDDp values ----
+# CDDp <- cbind(subSelectAllComDat$individualID,subSelectAllComDat$CDD_closest)
+# colnames(CDDp) <- c("individualID","CDDp")
+# CDDp=as.data.frame(CDDp) %>% group_by(individualID) %>% mutate(rowNum=row_number()) %>%
+#   pivot_wider(names_from=rowNum,values_from=CDDp)
+# speciesToTest <- CDDp$individualID[includeRow]
+# 
+# subSelectAllComDat <- selectAllComDat %>% dplyr::select(siteID,year,individualID,canopyPosition,height,
+#                                                         daylength,drought,averageDrought,springDayOfYear,
+#                                                         soilMoisture,CDD_closest,individualID,phenoStatus) %>%
+#   filter(!is.na(year),!is.na(individualID),!is.na(canopyPosition),!is.na(height),
+#          !is.na(daylength),!is.na(drought),!is.na(averageDrought),!is.na(springDayOfYear),
+#          !is.na(soilMoisture),!is.na(CDD_closest),!is.na(individualID))
+# j <- which(names(subSelectAllComDat)=="CDD_closest")
+# pdf(file="speciesCDD_rf3.pdf",
+#     width=6,height=6)
+# for(s in seq_along(speciesToTest)){
+#   subDat <- subSelectAllComDat %>% filter(individualID==speciesToTest[s],phenoStatus==1)
+#   if(nrow(subDat)>5){
+#     print(s)
+#     rf <- randomForest(CDD_closest ~ ., data=subDat)
+#     randomForest::varImpPlot(rf)
+#     plot(subDat$soilMoisture,subDat$CDD_closest,pch=20,main=speciesToTest[s])
+#     partialPlot(x=rf,pred.data=data.frame(subDat),x.var="daylength")
+#     partialPlot(x=rf,pred.data=data.frame(subDat),x.var="soilMoisture")
+#   }
+# }
+# dev.off()
+# 
+# 
+# 
+# subDat <- subSelectAllComDat %>% filter(phenoStatus==1)
+# 
+# rf <- randomForest(CDD_closest ~ ., data=subDat)
+# 
+# pdf(file="CDD_rf.pdf",
+#     width=6,height=6)
+# randomForest::varImpPlot(rf)
+# #plot(subDat$soilMoisture,subDat$CDD_closest,pch=20,main=speciesToTest[s])
+# partialPlot(x=rf,pred.data=data.frame(subDat),x.var="daylength")
+# partialPlot(x=rf,pred.data=data.frame(subDat),x.var="soilMoisture")
+# 
+# dev.off()
 
 
 # yesData <- selectAllComDat %>% filter(phenoStatus=="1",drought<1,CDD_10>0)
@@ -179,21 +181,21 @@ for(i in 1:nchain){
 }
 
 #Run Model ----
-j.model   <- jags.model(file = textConnection(generalModel_SM),
+j.model   <- jags.model(file = textConnection(generalModel),
                         data = JAGSdat,
                         n.chains = nchain,
                         inits=inits)
 #variableNames <- c("p.proc","b0","b1","x")
 #variableNames <- c("CDDCrit_mean","CDDCrit_tau","p")
 variableNames <- c("CDDCrit","p")
-
-var.out   <- coda.samples (model = j.model,
-                           variable.names = variableNames,
-                           n.iter = 10000)
-pdf(file="fuzzyCaterpillers2.pdf",
-    width=6,height=6)
-plot(var.out)
-dev.off()
+# 
+# var.out   <- coda.samples (model = j.model,
+#                            variable.names = variableNames,
+#                            n.iter = 10000)
+# pdf(file="fuzzyCaterpillers2.pdf",
+#     width=6,height=6)
+# plot(var.out)
+# dev.off()
 
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
@@ -226,24 +228,24 @@ out.mat <- as.data.frame(as.matrix(out.burn))
 # 
 # dev.off()
 # 
-pdf(file="CDDrelationships.pdf",
-    width=6,height=6)
-for(i in 1:nrow(JAGSdat$phenoStatus)){
-  print(i)
-  ids <- which(JAGSdat$phenoStatus[i,]==1)
-  print(paste0("length yes:",length(na.omit(JAGSdat$CDDp[i,-ids]))))
-  print(paste0("length no:",length(ids)))
-  if(length(ids)>1){
-    plot(density(na.omit(JAGSdat$CDDp[i,-ids])),xlim=range(JAGSdat$CDDp[i,],na.rm=TRUE))
-    lines(density(na.omit(JAGSdat$CDDp[i,ids])),col="orange")
-    
-    plot(density(na.omit(JAGSdat$drought[i,-ids])),xlim=range(JAGSdat$drought[i,],na.rm=TRUE))
-    lines(density(na.omit(JAGSdat$drought[i,ids])),col="orange")
-    
-    plot(density(na.omit(JAGSdat$daylength[i,-ids])),xlim=range(JAGSdat$daylength[i,],na.rm=TRUE))
-    lines(density(na.omit(JAGSdat$daylength[i,ids])),col="orange")
-  }
-}
-dev.off()
+# pdf(file="CDDrelationships_individual.pdf",
+#     width=6,height=6)
+# for(i in 1:nrow(JAGSdat$phenoStatus)){
+#   print(i)
+#   ids <- which(JAGSdat$phenoStatus[i,]==1)
+#   print(paste0("length yes:",length(na.omit(JAGSdat$CDDp[i,-ids]))))
+#   print(paste0("length no:",length(ids)))
+#   if(length(ids)>1){
+#     plot(density(na.omit(JAGSdat$CDDp[i,-ids])),xlim=range(JAGSdat$CDDp[i,],na.rm=TRUE))
+#     lines(density(na.omit(JAGSdat$CDDp[i,ids])),col="orange")
+#     
+#     plot(density(na.omit(JAGSdat$drought[i,-ids])),xlim=range(JAGSdat$drought[i,],na.rm=TRUE))
+#     lines(density(na.omit(JAGSdat$drought[i,ids])),col="orange")
+#     
+#     plot(density(na.omit(JAGSdat$daylength[i,-ids])),xlim=range(JAGSdat$daylength[i,],na.rm=TRUE))
+#     lines(density(na.omit(JAGSdat$daylength[i,ids])),col="orange")
+#   }
+# }
+# dev.off()
 
 
