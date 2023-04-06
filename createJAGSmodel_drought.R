@@ -172,9 +172,20 @@ p ~ dbeta(10,1) T(0.5,1)
 }
 "
 
+
+indMeans <- numeric()
+for(j in 1:JAGSdat$N){
+  indMeans <- c(indMeans,mean(JAGSdat$CDDp[j,JAGSdat$phenoStatus[j,]==1],na.rm=TRUE))
+}
+
 inits <- list()
+
 for(i in 1:nchain){
-  inits[[i]] <- list(p=rnorm(1,0.9,0.001),CDDCrit=rnorm(JAGSdat$N,priorMean,10))
+  indInits <- numeric()
+  for(j in 1:JAGSdat$N){
+    indInits <- c(indInits,rnorm(1,indMeans[j],1))
+  }
+  inits[[i]] <- list(p=rnorm(1,0.9,0.001),CDDCrit=indInits)
 }
 # for(i in 1:nchain){
 #   inits[[i]] <- list(p=rnorm(1,0.9,0.001),k=rnorm(1,-1,0.1))
@@ -194,7 +205,7 @@ var.out   <- coda.samples (model = j.model,
                            n.iter = 2000)
 gelman.diag(var.out)
 
-pdf(file="fuzzyCaterpillers3_new.pdf",
+pdf(file="fuzzyCaterpillers3_new2.pdf",
     width=6,height=6)
 plot(var.out)
 dev.off()
@@ -203,7 +214,7 @@ var.burn=var.out
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 # out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
 #                           baseNum = 10000,iterSize = 10000,maxGBR=30)
-save(var.burn,file="DM_HARV_JAGS_varBurn_sub.RData")
+save(var.burn,file="DM_HARV_JAGS_varBurn_sub2.RData")
 # load(file="DM_HARV_JAGS_varBurn.RData")
 # out.mat <- as.data.frame(as.matrix(out.burn))
 
