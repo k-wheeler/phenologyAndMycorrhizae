@@ -65,9 +65,9 @@ for(i in 1:nrow(phenoStatus)){
   includeRow <- c(includeRow,
                   (sum(na.omit(as.numeric(as.character(phenoStatus[i,])))==1)>100))
 }
-sampleRow <- sample(which(includeRow),20,replace=FALSE)
-includeRow <- rep(FALSE,length(includeRow))
-includeRow[sampleRow] <- TRUE
+# sampleRow <- sample(which(includeRow),20,replace=FALSE)
+# includeRow <- rep(FALSE,length(includeRow))
+# includeRow[sampleRow] <- TRUE
 
 siteIDs=(matrix(as.numeric(as.matrix(siteIDs)),ncol=ncol(siteIDs))[includeRow,])
 drought=(matrix(as.numeric(as.matrix(drought)),ncol=ncol(drought))[includeRow,])
@@ -189,20 +189,22 @@ j.model   <- jags.model(file = textConnection(generalModel),
 #variableNames <- c("CDDCrit_mean","CDDCrit_tau","p")
 variableNames <- c("CDDCrit","p")
 # 
-# var.out   <- coda.samples (model = j.model,
-#                            variable.names = variableNames,
-#                            n.iter = 1000)
-# pdf(file="fuzzyCaterpillers2.pdf",
-#     width=6,height=6)
-# plot(var.out)
-# dev.off()
+var.out   <- coda.samples (model = j.model,
+                           variable.names = variableNames,
+                           n.iter = 2000)
+gelman.diag(var.out)
+
+pdf(file="fuzzyCaterpillers3.pdf",
+    width=6,height=6)
+plot(var.out)
+dev.off()
 
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
-out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
-                          baseNum = 10000,iterSize = 10000,maxGBR=30)
-save(out.burn,file="DM_HARV_JAGS_varBurn.RData")
-load(file="DM_HARV_JAGS_varBurn.RData")
-out.mat <- as.data.frame(as.matrix(out.burn))
+# out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
+#                           baseNum = 10000,iterSize = 10000,maxGBR=30)
+save(var.burn,file="DM_HARV_JAGS_varBurn_sub.RData")
+# load(file="DM_HARV_JAGS_varBurn.RData")
+# out.mat <- as.data.frame(as.matrix(out.burn))
 
 # pdf(file="DM_HARV_parameterDensities.pdf",
 #     width=6,height=6)
