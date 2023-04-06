@@ -194,10 +194,11 @@ var.out   <- coda.samples (model = j.model,
                            n.iter = 2000)
 gelman.diag(var.out)
 
-pdf(file="fuzzyCaterpillers3.pdf",
+pdf(file="fuzzyCaterpillers3_new.pdf",
     width=6,height=6)
 plot(var.out)
 dev.off()
+var.burn=var.out
 
 # out.burn <- coda.samples(model=j.model,variable.names=variableNames,n.iter=20000)
 # out.burn <- runMCMC_Model(j.model=j.model,variableNames=variableNames,
