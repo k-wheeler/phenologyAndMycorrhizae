@@ -35,16 +35,18 @@ minLat <- min(includedStations$LAT) - 0.5
 maxLon <- max(includedStations$LON) + 0.5
 minLon <- min(includedStations$LON) - 0.5
 
-area <- c(maxLat,minLon,minLat,minLon)
+#area <- c(maxLat,minLon,minLat,minLon)
+area <- c(52,8,48,12)
 
 #for(s in (1:nrow(includedStations))){
-lapply((1950:2022),function(X){
+#lapply((1950:2022),function(X){
+X <- 1980
   yr <- X
   print(yr)
   start_date <- as.Date(paste0(yr,"-01-01"))
   end_date <- as.Date(paste0(yr,"-12-31"))
   
-  fileName <- paste0(dataPath,'ERA5_PEP/',"PEPsites_",start_date,"_",end_date,"_era5Members.nc")
+  fileName <- paste0(dataPath,'ERA5_PEP/',"PEPsites_",start_date,"_",end_date,"_era5MembersTEST.nc")
   print(fileName)
   if(!file.exists(fileName)){
     do_next <- tryCatch({
@@ -67,4 +69,4 @@ lapply((1950:2022),function(X){
       TRUE
     })
   }
-})
+#})
