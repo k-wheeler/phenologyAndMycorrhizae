@@ -12,8 +12,8 @@ cclient <- cdsapi$Client()
 variables <- tibble::tribble(
   ~cf_name, ~units, ~api_name, ~ncdf_name,
   "air_temperature", "Kelvin", "2m_temperature", "t2m",
-) #Some examples (see more at: https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview)
-
+  "precipitation_flux", "kg/m2/s", "total_precipitation", NA_character_,
+)
 var <- variables[["api_name"]]
 maxLat <- max(includedStations$LAT) + 0.5
 minLat <- min(includedStations$LAT) - 0.5
@@ -24,8 +24,8 @@ area <- c(maxLat,minLon,minLat,minLon)
 #area <- c(52,8,48,12)
 
 #for(s in (1:nrow(includedStations))){
-#lapply((1950:2022),function(X){
-X <- 1980
+lapply((1964:2022),function(X){
+#X <- 1980
   yr <- X
   print(yr)
   start_date <- as.Date(paste0(yr,"-01-01"))
@@ -54,4 +54,4 @@ X <- 1980
       TRUE
     })
   }
-#})
+})
