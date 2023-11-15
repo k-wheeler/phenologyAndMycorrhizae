@@ -20,11 +20,11 @@ minLat <- min(includedStations$LAT) - 0.5
 maxLon <- max(includedStations$LON) + 0.5
 minLon <- min(includedStations$LON) - 0.5
 
-area <- c(maxLat,minLon,minLat,minLon)
+area <- c(maxLat,minLon,minLat,maxLon)
 #area <- c(52,8,48,12)
 
 #for(s in (1:nrow(includedStations))){
-lapply((1964:2022),function(X){
+lapply((2022:1950),function(X){
 #X <- 1980
   yr <- X
   print(yr)
