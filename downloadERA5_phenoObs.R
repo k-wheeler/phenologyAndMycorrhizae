@@ -3,8 +3,9 @@ library('ncdf4')
 library("reticulate")
 
 source('sharedVariables.R')
-includedStations <- read.csv("PEPlongtermStations.csv") #Created in PEPdataChangeFigure.R file
-includedStations <- includedStations %>% filter(!is.na(LAT) & !is.na(LON))
+#includedStations <- read.csv("PEPlongtermStations.csv") #Created in PEPdataChangeFigure.R file
+includedStations <- read.csv('allPhenoSites.csv')
+includedStations <- includedStations %>% filter(!is.na(latitude) & !is.na(longitude))
 
 cdsapi <- reticulate::import_from_path("cdsapi",path="~/.conda/envs/myR_new2/lib/python3.11/site-packages")
 cclient <- cdsapi$Client()
@@ -15,23 +16,23 @@ variables <- tibble::tribble(
   "precipitation_flux", "kg/m2/s", "total_precipitation", NA_character_,
 )
 var <- variables[["api_name"]]
-maxLat <- max(includedStations$LAT) + 0.5
-minLat <- min(includedStations$LAT) - 0.5
-maxLon <- max(includedStations$LON) + 0.5
-minLon <- min(includedStations$LON) - 0.5
+maxLat <- max(includedStations$latitude) + 0.5
+minLat <- min(includedStations$latitude) - 0.5
+maxLon <- max(includedStations$longitude) + 0.5
+minLon <- min(includedStations$longitude) - 0.5
 
 area <- c(maxLat,minLon,minLat,maxLon)
 #area <- c(52,8,48,12)
 
 #for(s in (1:nrow(includedStations))){
-lapply((2022:1950),function(X){
+lapply((1950:2022),function(X){
 #X <- 1980
   yr <- X
   print(yr)
   start_date <- as.Date(paste0(yr,"-01-01"))
   end_date <- as.Date(paste0(yr,"-12-31"))
   
-  fileName <- paste0(dataPath,'ERA5_PEP/',"PEPsites_",start_date,"_",end_date,"_era5Members.nc")
+  fileName <- paste0(dataPath,'ERA5_phenoObs/',"phenoObs_",start_date,"_",end_date,"_era5Members.nc")
   print(fileName)
   if(!file.exists(fileName)){
     do_next <- tryCatch({
