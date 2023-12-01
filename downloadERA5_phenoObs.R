@@ -16,10 +16,10 @@ variables <- tibble::tribble(
   "precipitation_flux", "kg/m2/s", "total_precipitation", NA_character_,
 )
 var <- variables[["api_name"]]
-maxLat <- max(includedStations$latitude) + 0.5
-minLat <- min(includedStations$latitude) - 0.5
-maxLon <- max(includedStations$longitude) + 0.5
-minLon <- min(includedStations$longitude) - 0.5
+maxLat <- 70#max(includedStations$latitude) + 0.5
+minLat <- 35#min(includedStations$latitude) - 0.5
+maxLon <- 42#max(includedStations$longitude) + 0.5
+minLon <- -15#min(includedStations$longitude) - 0.5
 
 area <- c(maxLat,minLon,minLat,maxLon)
 #area <- c(52,8,48,12)
@@ -32,7 +32,7 @@ lapply((1950:2022),function(X){
   start_date <- as.Date(paste0(yr,"-01-01"))
   end_date <- as.Date(paste0(yr,"-12-31"))
   
-  fileName <- paste0(dataPath,'ERA5_phenoObs/',"phenoObs_",start_date,"_",end_date,"_era5Members.nc")
+  fileName <- paste0(dataPath,'ERA5_phenoObs/',"phenoObs_europe",start_date,"_",end_date,"_era5Members.nc")
   print(fileName)
   if(!file.exists(fileName)){
     do_next <- tryCatch({
