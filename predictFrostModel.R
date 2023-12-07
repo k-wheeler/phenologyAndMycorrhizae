@@ -15,7 +15,6 @@ colnames(groupedSites) <- c('latitude','longitude')
 phenoSites <- groupedSites
 phenoSites <- phenoSites %>% filter(latitude<70 & latitude>35 & longitude < 42 & longitude > (-15))
 
-
 allCDD_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
 allGDD_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
 allDayLengths_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
@@ -108,14 +107,25 @@ for(f in 1:3){
     
     datTime <- datTime %>% filter(funName=="min")
     datTime$value <- datTime$value - 273
+    frostStatus <- rep(NA,length(dates))
     
     lastSpring <- which(datTime$value[1:182]<0)[length(which(datTime$value[1:182]<0))]
+    if(length(lastSpring)==0){
+      frostStatus[1:181] <- 1
+    }else{
+      frostStatus[1:(lastSpring)] <- 0
+      frostStatus[(lastSpring+1):181] <- 1
+    }
+    
     firstAutumn <- which(datTime$value[182:length(datTime$value)]<0)[1]+181
-    frostStatus <- rep(NA,length(dates))
-    frostStatus[1:(lastSpring)] <- 0
-    frostStatus[(lastSpring+1):181] <- 1
-    frostStatus[182:(firstAutumn-1)] <- 0
-    frostStatus[firstAutumn:length(frostStatus)] <- 1
+    if(is.na(firstAutumn)){
+      frostStatus[182:length(frostStatus)] <- 1
+    }else{
+      frostStatus[182:(firstAutumn-1)] <- 0
+      frostStatus[firstAutumn:length(frostStatus)] <- 1
+    }
+
+
     
     dayLengths <- numeric()
     #lat <- 42.5378 
@@ -143,6 +153,8 @@ for(f in 1:3){
   nc_close(nc)
   
 }
+
+
 write.csv(allCDD_spring,file="allCDD_spring_europe.csv")
 write.csv(allGDD_spring,file="allGDD_spring_europe.csv")
 
