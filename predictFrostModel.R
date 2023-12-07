@@ -15,17 +15,17 @@ colnames(groupedSites) <- c('latitude','longitude')
 phenoSites <- groupedSites
 phenoSites <- phenoSites %>% filter(latitude<70 & latitude>35 & longitude < 42 & longitude > (-15))
 
-allCDD_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
-allGDD_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
-allDayLengths_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
-allCumP_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
-allFrostStatus_spring <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=185)
+allCDD_spring <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=185)
+allGDD_spring <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=185)
+allDayLengths_spring <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=185)
+allCumP_spring <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=185)
+allFrostStatus_spring <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=185)
 
-allCDD_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
-allGDD_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
-allDayLengths_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
-allCumP_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
-allFrostStatus_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
+allCDD_fall <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=186)
+allGDD_fall <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=186)
+allDayLengths_fall <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=186)
+allCumP_fall <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=186)
+allFrostStatus_fall <- matrix(nrow=nrow(phenoSites)*length(ncFiles),ncol=186)
 
 f=1
 ct <- 1
@@ -43,6 +43,7 @@ for(f in 1:50){
   s=1
   #for(s in 1:3){
   for(s in 1:nrow(phenoSites)){
+    print(s/nrow(phenoSites))
     lon=phenoSites$longitude[s]
     lat=phenoSites$latitude[s]
     print(c(lon,lat))
