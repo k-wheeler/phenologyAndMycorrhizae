@@ -30,7 +30,7 @@ allFrostStatus_fall <- matrix(nrow=length(phenoSites)*length(ncFiles),ncol=186)
 f=1
 ct <- 1
 #for(f in seq_along(ncFiles)){
-for(f in 1:3){
+for(f in 1:50){
   print(f)
   nc <- nc_open(ncFiles[f])
   
@@ -41,8 +41,8 @@ for(f in 1:3){
   latDim <- (ncdf4::ncvar_get(nc, "latitude"))
   lonDim <- (ncdf4::ncvar_get(nc, "longitude"))
   s=1
-  for(s in 1:3){
-  #for(s in 1:nrow(phenoSites)){
+  #for(s in 1:3){
+  for(s in 1:nrow(phenoSites)){
     lon=phenoSites$longitude[s]
     lat=phenoSites$latitude[s]
     print(c(lon,lat))
