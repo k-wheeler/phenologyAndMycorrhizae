@@ -41,16 +41,15 @@ for(f in 1:3){
   
   latDim <- (ncdf4::ncvar_get(nc, "latitude"))
   lonDim <- (ncdf4::ncvar_get(nc, "longitude"))
-  
-  v <- "tp"
-  dat <- ncvar_get(nc,varid=v)
   s=1
-  #for(s in 1:nrow(phenoSites)){
   for(s in 1:3){
-
+  #for(s in 1:nrow(phenoSites)){
     lon=phenoSites$longitude[s]
     lat=phenoSites$latitude[s]
     print(c(lon,lat))
+    v <- "tp"
+    dat <- ncvar_get(nc,varid=v)
+    
     dat <- dat[which(lonDim==lon),which(latDim==lat),,]
     
     dat <- colMeans(dat)
