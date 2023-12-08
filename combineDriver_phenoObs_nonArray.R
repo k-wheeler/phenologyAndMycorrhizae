@@ -31,6 +31,7 @@ for(f in seq_along(ncFiles)){
   dates <- unique(time)
   yr <- lubridate::year(dates[1])
   if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",'frostStatus',"_",yr,".csv"))){
+    
     latLongYear <- cbind(phenoSites[,c('latitude','longitude')],yr)
     colnames(latLongYear) <- c('lat','lon','year')
     
@@ -39,6 +40,7 @@ for(f in seq_along(ncFiles)){
     
     #Cummulative Total Precipitation
     v <- "tp"
+    print(v)
     allDat <- ncvar_get(nc,varid=v)
     
     allCumP=lapply(1:nrow(phenoSites),function(X){
@@ -67,6 +69,7 @@ for(f in seq_along(ncFiles)){
     
     #Mean Daily GDD
     v <- 't2m'
+    print(v)
     allDat <- ncvar_get(nc,varid=v)
     
     allGDD=lapply(1:nrow(phenoSites),function(X){
@@ -98,6 +101,7 @@ for(f in seq_along(ncFiles)){
     unlistAndSave(dat=allGDD,driverName="GDD",latLongYear=latLongYear)
     
     #Mean Daily CDD
+    print('CDD')
     allCDD=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
@@ -127,6 +131,7 @@ for(f in seq_along(ncFiles)){
     unlistAndSave(dat=allCDD,driverName="CDD",latLongYear=latLongYear)
     
     #Frost Status
+    print('frostStatus')
     allFrostStatus=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
@@ -166,6 +171,7 @@ for(f in seq_along(ncFiles)){
     nc_close(nc)
     
     #Day length
+    print('daylength')
     allDaylengths=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
