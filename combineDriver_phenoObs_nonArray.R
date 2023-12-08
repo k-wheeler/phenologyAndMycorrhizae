@@ -159,7 +159,7 @@ for(f in seq_along(ncFiles)){
         frostStatus[182:(firstAutumn-1)] <- 0
         frostStatus[firstAutumn:length(frostStatus)] <- 1
       }
-      return(frostStatus)
+      return(frostStatus[1:365])
     })
     unlistAndSave(dat=allFrostStatus,driverName="frostStatus",latLongYear=latLongYear)
     
@@ -178,8 +178,10 @@ for(f in seq_along(ncFiles)){
                                      tz = "GMT") #GMT because I only care about difference
         dayLengths <- c(dayLengths,as.numeric(suntimes$sunset-suntimes$sunrise))
       }
-      return(dayLengths)
+      return(dayLengths[1:365])
     })
     unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
   }
 }
+
+
