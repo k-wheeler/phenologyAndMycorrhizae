@@ -5,7 +5,7 @@ num_tasks=as.numeric(args[2])
 fnames <- 1:73
 my_fnames=fnames[seq((my_task_id+1),73,num_tasks)]
 
-for(s in my_fnames){
+for(f in my_fnames){
   library('ncdf4')
   library('suncalc')
   library('tidyverse')
@@ -19,8 +19,6 @@ for(s in my_fnames){
   colnames(groupedSites) <- c('latitude','longitude')
   phenoSites <- groupedSites
   phenoSites <- phenoSites %>% filter(latitude<70 & latitude>35 & longitude < 42 & longitude > (-15))
-  
-  f=1
   
   unlistAndSave <- function(dat,driverName,latLongYear){
     dat=matrix(unlist(dat), ncol = 365,byrow = TRUE)
