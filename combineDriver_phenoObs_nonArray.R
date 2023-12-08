@@ -30,15 +30,17 @@ for(f in seq_along(ncFiles)){
   time <- as.Date(time)
   dates <- unique(time)
   yr <- lubridate::year(dates[1])
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",'frostStatus',"_",yr,".csv"))){
+  
+  latLongYear <- cbind(phenoSites[,c('latitude','longitude')],yr)
+  colnames(latLongYear) <- c('lat','lon','year')
+  
+  latDim <- (ncdf4::ncvar_get(nc, "latitude"))
+  lonDim <- (ncdf4::ncvar_get(nc, "longitude"))
+  
+  #Cummulative Total Precipitation
+  driverName <- 'cumP'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    latLongYear <- cbind(phenoSites[,c('latitude','longitude')],yr)
-    colnames(latLongYear) <- c('lat','lon','year')
-    
-    latDim <- (ncdf4::ncvar_get(nc, "latitude"))
-    lonDim <- (ncdf4::ncvar_get(nc, "longitude"))
-    
-    #Cummulative Total Precipitation
     v <- "tp"
     print(v)
     allDat <- ncvar_get(nc,varid=v)
@@ -66,11 +68,16 @@ for(f in seq_along(ncFiles)){
       
     })
     unlistAndSave(dat=allCumP,driverName="cumP",latLongYear=latLongYear)
+  }
+  
+  #Mean Daily GDD
+  
+  v <- 't2m'
+  print(v)
+  allDat <- ncvar_get(nc,varid=v)
+  driverName <- 'GDD'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    #Mean Daily GDD
-    v <- 't2m'
-    print(v)
-    allDat <- ncvar_get(nc,varid=v)
     
     allGDD=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
@@ -99,8 +106,12 @@ for(f in seq_along(ncFiles)){
       return(GDD[1:365])
     })
     unlistAndSave(dat=allGDD,driverName="GDD",latLongYear=latLongYear)
+  }
+  
+  #Mean Daily CDD
+  driverName <- 'CDD'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    #Mean Daily CDD
     print('CDD')
     allCDD=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
@@ -129,9 +140,14 @@ for(f in seq_along(ncFiles)){
       return(CDD[1:365])
     })
     unlistAndSave(dat=allCDD,driverName="CDD",latLongYear=latLongYear)
+  }
+  
+  #Frost Status
+  
+  print('frostStatus')
+  driverName <- 'frostStatus'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    #Frost Status
-    print('frostStatus')
     allFrostStatus=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
@@ -167,11 +183,15 @@ for(f in seq_along(ncFiles)){
       return(frostStatus[1:365])
     })
     unlistAndSave(dat=allFrostStatus,driverName="frostStatus",latLongYear=latLongYear)
+  }
+  nc_close(nc)
+  
+  
+  #Day length
+  print('daylength')
+  driverName <- 'daylength'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    nc_close(nc)
-    
-    #Day length
-    print('daylength')
     allDaylengths=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
@@ -189,5 +209,6 @@ for(f in seq_along(ncFiles)){
     unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
   }
 }
+
 
 
