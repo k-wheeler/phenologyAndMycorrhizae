@@ -1,5 +1,9 @@
+args = commandArgs(trailingOnly=TRUE)
+print(args)
+my_task_id=as.numeric(args[1])
+num_tasks=as.numeric(args[2])
 fnames <- 1:73
-my_fnames=fnames#[seq((my_task_id+1),47,num_tasks)]
+my_fnames=fnames[seq((my_task_id+1),73,num_tasks)]
 
 for(s in my_fnames){
   library('ncdf4')
