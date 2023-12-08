@@ -201,12 +201,10 @@ for(f in my_fnames){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
       
-      dayLengths <- unlist(lapply(dates,function(X){
-        suntimes <- getSunlightTimes(date=X,
-                                     lat=lat,lon=lon,keep=c("sunrise","sunset"),
-                                     tz = "GMT") #GMT because I only care about difference
-        return(as.numeric(suntimes$sunset-suntimes$sunrise))
-      }))
+      suntimes <- getSunlightTimes(date=dates,
+                                   lat=lat,lon=lon,keep=c("sunrise","sunset"),
+                                   tz = "GMT") #GMT because I only care about difference
+      daylengths <- as.numeric(suntimes$sunset-suntimes$sunrise)
       return(dayLengths[1:365])
       
     })
