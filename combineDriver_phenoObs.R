@@ -205,7 +205,7 @@ for(f in my_fnames){
                                    lat=lat,lon=lon,keep=c("sunrise","sunset"),
                                    tz = "GMT") #GMT because I only care about difference
       daylengths <- as.numeric(suntimes$sunset-suntimes$sunrise)
-      return(dayLengths[1:365])
+      return(daylengths[1:365])
       
     })
     unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
