@@ -43,148 +43,173 @@ for(f in my_fnames){
   lonDim <- (ncdf4::ncvar_get(nc, "longitude"))
   
   #Cummulative Total Precipitation
-  v <- "tp"
-  allDat <- ncvar_get(nc,varid=v)
-  
-  allCumP=lapply(1:nrow(phenoSites),function(X){
-    lon=phenoSites$longitude[X]
-    lat=phenoSites$latitude[X]
+  driverName <- 'cumP'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
+    v <- "tp"
+    print(v)
+    allDat <- ncvar_get(nc,varid=v)
     
-    dat <- colMeans(dat)
-    datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
-      summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
-      pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
-      mutate(var=v)
-    
-    datTime$cumP <- NA
-    datTime <- datTime %>% filter(var=="tp", funName=="sum")
-    cumP <- rep(NA,nrow(datTime))
-    cumP[1] <- datTime$value[1]
-    for(t in 2:nrow(datTime)){
-      cumP[t] <- cumP[(t-1)]+datTime$value[t]
-    }
-    return(cumP[1:365])
-    
-  })
-  unlistAndSave(dat=allCumP,driverName="cumP",latLongYear=latLongYear)
+    allCumP=lapply(1:nrow(phenoSites),function(X){
+      lon=phenoSites$longitude[X]
+      lat=phenoSites$latitude[X]
+      
+      dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
+      
+      dat <- colMeans(dat)
+      datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
+        summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
+        pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
+        mutate(var=v)
+      
+      datTime$cumP <- NA
+      datTime <- datTime %>% filter(var=="tp", funName=="sum")
+      cumP <- rep(NA,nrow(datTime))
+      cumP[1] <- datTime$value[1]
+      for(t in 2:nrow(datTime)){
+        cumP[t] <- cumP[(t-1)]+datTime$value[t]
+      }
+      return(cumP[1:365])
+      
+    })
+    unlistAndSave(dat=allCumP,driverName="cumP",latLongYear=latLongYear)
+  }
   
   #Mean Daily GDD
-  v <- 't2m'
-  allDat <- ncvar_get(nc,varid=v)
   
-  allGDD=lapply(1:nrow(phenoSites),function(X){
-    lon=phenoSites$longitude[X]
-    lat=phenoSites$latitude[X]
+  v <- 't2m'
+  print(v)
+  allDat <- ncvar_get(nc,varid=v)
+  driverName <- 'GDD'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
     
-    dat <- colMeans(dat)
-    datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
-      summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
-      pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
-      mutate(var=v)
-    
-    datTime <- datTime %>% filter(funName=="mean")
-    datTime$value <- datTime$value - 273 #Convert from K to C
-    datTime$GDD_offset <- unlist(lapply(datTime$value,function(X){
-      return(max(X-0,0))
-    }))
-    
-    GDD <- rep(NA,nrow(datTime))
-    GDD[1:45] <- NA
-    
-    for(t in 46:nrow(datTime)){
-      GDD[t] <- sum(datTime$GDD_offset[(t-45):(t-1)])
-    }
-    return(GDD[1:365])
-  })
-  unlistAndSave(dat=allGDD,driverName="GDD",latLongYear=latLongYear)
+    allGDD=lapply(1:nrow(phenoSites),function(X){
+      lon=phenoSites$longitude[X]
+      lat=phenoSites$latitude[X]
+      
+      dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
+      
+      dat <- colMeans(dat)
+      datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
+        summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
+        pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
+        mutate(var=v)
+      
+      datTime <- datTime %>% filter(funName=="mean")
+      datTime$value <- datTime$value - 273 #Convert from K to C
+      datTime$GDD_offset <- unlist(lapply(datTime$value,function(X){
+        return(max(X-0,0))
+      }))
+      
+      GDD <- rep(NA,nrow(datTime))
+      GDD[1:45] <- NA
+      
+      for(t in 46:nrow(datTime)){
+        GDD[t] <- sum(datTime$GDD_offset[(t-45):(t-1)])
+      }
+      return(GDD[1:365])
+    })
+    unlistAndSave(dat=allGDD,driverName="GDD",latLongYear=latLongYear)
+  }
   
   #Mean Daily CDD
-  allCDD=lapply(1:nrow(phenoSites),function(X){
-    lon=phenoSites$longitude[X]
-    lat=phenoSites$latitude[X]
+  driverName <- 'CDD'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
     
-    dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
-    
-    dat <- colMeans(dat)
-    datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
-      summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
-      pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
-      mutate(var=v)
-    
-    datTime <- datTime %>% filter(funName=="mean")
-    datTime$value <- datTime$value - 273 #Convert from K to C
-    datTime$CDD_offset <- unlist(lapply(datTime$value,function(X){
-      return(max(20-X,0))
-    }))
-    
-    CDD <- rep(NA,nrow(datTime))
-    CDD[1:14] <- NA
-    
-    for(t in 15:nrow(datTime)){
-      CDD[t] <- sum(datTime$CDD_offset[(t-14):(t-1)])
-    }
-    return(CDD[1:365])
-  })
-  unlistAndSave(dat=allCDD,driverName="CDD",latLongYear=latLongYear)
+    print('CDD')
+    allCDD=lapply(1:nrow(phenoSites),function(X){
+      lon=phenoSites$longitude[X]
+      lat=phenoSites$latitude[X]
+      
+      dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
+      
+      dat <- colMeans(dat)
+      datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
+        summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
+        pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
+        mutate(var=v)
+      
+      datTime <- datTime %>% filter(funName=="mean")
+      datTime$value <- datTime$value - 273 #Convert from K to C
+      datTime$CDD_offset <- unlist(lapply(datTime$value,function(X){
+        return(max(20-X,0))
+      }))
+      
+      CDD <- rep(NA,nrow(datTime))
+      CDD[1:14] <- NA
+      
+      for(t in 15:nrow(datTime)){
+        CDD[t] <- sum(datTime$CDD_offset[(t-14):(t-1)])
+      }
+      return(CDD[1:365])
+    })
+    unlistAndSave(dat=allCDD,driverName="CDD",latLongYear=latLongYear)
+  }
   
   #Frost Status
-  allFrostStatus=lapply(1:nrow(phenoSites),function(X){
-    lon=phenoSites$longitude[X]
-    lat=phenoSites$latitude[X]
-    
-    dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
-    
-    dat <- colMeans(dat)
-    
-    datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
-      summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
-      pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
-      mutate(var=v)
-    
-    datTime <- datTime %>% filter(funName=="min")
-    datTime$value <- datTime$value - 273
-    frostStatus <- rep(NA,length(dates))
-    
-    lastSpring <- which(datTime$value[1:182]<0)[length(which(datTime$value[1:182]<0))]
-    if(length(lastSpring)==0){
-      frostStatus[1:181] <- 1
-    }else{
-      frostStatus[1:(lastSpring)] <- 0
-      frostStatus[(lastSpring+1):181] <- 1
-    }
-    
-    firstAutumn <- which(datTime$value[182:length(datTime$value)]<0)[1]+181
-    if(is.na(firstAutumn)){
-      frostStatus[182:length(frostStatus)] <- 1
-    }else{
-      frostStatus[182:(firstAutumn-1)] <- 0
-      frostStatus[firstAutumn:length(frostStatus)] <- 1
-    }
-    return(frostStatus[1:365])
-  })
-  unlistAndSave(dat=allFrostStatus,driverName="frostStatus",latLongYear=latLongYear)
   
+  print('frostStatus')
+  driverName <- 'frostStatus'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+    
+    allFrostStatus=lapply(1:nrow(phenoSites),function(X){
+      lon=phenoSites$longitude[X]
+      lat=phenoSites$latitude[X]
+      
+      dat <- allDat[which(lonDim==lon),which(latDim==lat),,]
+      
+      dat <- colMeans(dat)
+      
+      datTime <- data.frame(var=dat,date=time) %>% group_by(date) %>% 
+        summarise(mean=mean(var),min=min(var),max=max(var),sum=sum(var)) %>%
+        pivot_longer(cols=2:5,names_to="funName",values_to="value") %>%
+        mutate(var=v)
+      
+      datTime <- datTime %>% filter(funName=="min")
+      datTime$value <- datTime$value - 273
+      frostStatus <- rep(NA,length(dates))
+      
+      lastSpring <- which(datTime$value[1:182]<0)[length(which(datTime$value[1:182]<0))]
+      if(length(lastSpring)==0){
+        frostStatus[1:181] <- 1
+      }else{
+        frostStatus[1:(lastSpring)] <- 0
+        frostStatus[(lastSpring+1):181] <- 1
+      }
+      
+      firstAutumn <- which(datTime$value[182:length(datTime$value)]<0)[1]+181
+      if(is.na(firstAutumn)){
+        frostStatus[182:length(frostStatus)] <- 1
+      }else{
+        frostStatus[182:(firstAutumn-1)] <- 0
+        frostStatus[firstAutumn:length(frostStatus)] <- 1
+      }
+      return(frostStatus[1:365])
+    })
+    unlistAndSave(dat=allFrostStatus,driverName="frostStatus",latLongYear=latLongYear)
+  }
   nc_close(nc)
   
-  #Day length
-  allDaylengths=lapply(1:nrow(phenoSites),function(X){
-    lon=phenoSites$longitude[X]
-    lat=phenoSites$latitude[X]
-    
-    dayLengths <- numeric()
-    
-    for(d in 1:length(dates)){
-      suntimes <- getSunlightTimes(date=dates[d],
-                                   lat=lat,lon=lon,keep=c("sunrise","sunset"),
-                                   tz = "GMT") #GMT because I only care about difference
-      dayLengths <- c(dayLengths,as.numeric(suntimes$sunset-suntimes$sunrise))
-    }
-    return(dayLengths[1:365])
-  })
-  unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
   
+  #Day length
+  print('daylength')
+  driverName <- 'daylength'
+  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+    
+    allDaylengths=lapply(1:nrow(phenoSites),function(X){
+      lon=phenoSites$longitude[X]
+      lat=phenoSites$latitude[X]
+      
+      dayLengths <- unlist(lapply(dates,function(X){
+        suntimes <- getSunlightTimes(date=X,
+                                     lat=lat,lon=lon,keep=c("sunrise","sunset"),
+                                     tz = "GMT") #GMT because I only care about difference
+        return(as.numeric(suntimes$sunset-suntimes$sunrise))
+      }))
+      return(dayLengths[1:365])
+      
+    })
+    unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
+  }
 }

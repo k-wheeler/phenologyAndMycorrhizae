@@ -196,15 +196,14 @@ for(f in seq_along(ncFiles)){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
       
-      dayLengths <- numeric()
-      
-      for(d in 1:length(dates)){
-        suntimes <- getSunlightTimes(date=dates[d],
+      dayLengths <- unlist(lapply(dates,function(X){
+        suntimes <- getSunlightTimes(date=X,
                                      lat=lat,lon=lon,keep=c("sunrise","sunset"),
                                      tz = "GMT") #GMT because I only care about difference
-        dayLengths <- c(dayLengths,as.numeric(suntimes$sunset-suntimes$sunrise))
-      }
+        return(as.numeric(suntimes$sunset-suntimes$sunrise))
+      }))
       return(dayLengths[1:365])
+
     })
     unlistAndSave(dat=allDaylengths,driverName="daylength",latLongYear=latLongYear)
   }
