@@ -9,8 +9,21 @@ for(f in my_fnames){
   library('ncdf4')
   library('suncalc')
   library('tidyverse')
+  continent <- "USA"
+  if(continent=="europe"){
+    maxLat <- 70#max(includedStations$latitude) + 0.5
+    minLat <- 35#min(includedStations$latitude) - 0.5
+    maxLon <- 42#max(includedStations$longitude) + 0.5
+    minLon <- -15#min(includedStations$longitude) - 0.5
+  }else if(continent=="USA"){
+    maxLat <- 51
+    minLat <- 25
+    maxLon <- (-63)
+    minLon <- (-130)
+  }
+  
   #ncFiles <- paste0("HARV_ERA5/",dir(path="HARV_ERA5",pattern="nc"))
-  ncFiles <- paste0('Data/ERA5_phenoObs/',dir(path='Data/ERA5_phenoObs/',pattern="nc"))
+  ncFiles <- paste0('Data/ERA5_phenoObs/',dir(path='Data/ERA5_phenoObs/',pattern=continent))
   phenoSites <- read.csv('allPhenoSites.csv')
   phenoSites$roundedLat <- round(c(phenoSites$latitude) * 4) / 4
   phenoSites$roundedLon <- round(c(phenoSites$longitude) * 4) / 4
@@ -18,14 +31,14 @@ for(f in my_fnames){
   groupedSites$n <- NULL
   colnames(groupedSites) <- c('latitude','longitude')
   phenoSites <- groupedSites
-  phenoSites <- phenoSites %>% filter(latitude<70 & latitude>35 & longitude < 42 & longitude > (-15))
+  phenoSites <- phenoSites %>% filter(latitude<maxLat & latitude>minLat & longitude < maxLon & longitude > minLon)
   
   unlistAndSave <- function(dat,driverName,latLongYear){
     dat=matrix(unlist(dat), ncol = 365,byrow = TRUE)
     colnames(dat) <- seq(1,365)
     dat <- cbind(latLongYear,dat)
     
-    write.csv(dat,file=paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"),quote=FALSE,row.names = FALSE)
+    write.csv(dat,file=paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"),quote=FALSE,row.names = FALSE)
   }
   
   print(f)
@@ -44,7 +57,7 @@ for(f in my_fnames){
   
   #Cummulative Total Precipitation
   driverName <- 'cumP'
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+  if(!file.exists(paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"))){
     
     v <- "tp"
     print(v)
@@ -76,14 +89,11 @@ for(f in my_fnames){
   }
   
   #Mean Daily GDD
-  
   v <- 't2m'
   print(v)
   allDat <- ncvar_get(nc,varid=v)
   driverName <- 'GDD'
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
-    
-    
+  if(!file.exists(paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"))){
     allGDD=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
       lat=phenoSites$latitude[X]
@@ -115,7 +125,7 @@ for(f in my_fnames){
   
   #Mean Daily CDD
   driverName <- 'CDD'
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+  if(!file.exists(paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"))){
     
     print('CDD')
     allCDD=lapply(1:nrow(phenoSites),function(X){
@@ -148,10 +158,9 @@ for(f in my_fnames){
   }
   
   #Frost Status
-  
   print('frostStatus')
   driverName <- 'frostStatus'
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+  if(!file.exists(paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"))){
     
     allFrostStatus=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
@@ -195,7 +204,7 @@ for(f in my_fnames){
   #Day length
   print('daylength')
   driverName <- 'daylength'
-  if(!file.exists(paste0("Data/phenoObs_Drivers/europe_",driverName,"_",yr,".csv"))){
+  if(!file.exists(paste0("Data/phenoObs_Drivers/",continent,"_",driverName,"_",yr,".csv"))){
     
     allDaylengths=lapply(1:nrow(phenoSites),function(X){
       lon=phenoSites$longitude[X]
