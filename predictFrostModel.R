@@ -4,6 +4,7 @@ library('suncalc')
 library('rjags')
 library('runjags')
 library('tidyverse')
+
 #ncFiles <- paste0("HARV_ERA5/",dir(path="HARV_ERA5",pattern="nc"))
 ncFiles <- paste0('Data/ERA5_phenoObs/',dir(path='Data/ERA5_phenoObs/',pattern="nc"))
 phenoSites <- read.csv('allPhenoSites.csv')
