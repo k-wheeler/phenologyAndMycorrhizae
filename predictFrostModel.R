@@ -6,7 +6,7 @@ library('runjags')
 library('tidyverse')
 
 #for(continent in c('europe','USA')){
-continent <- "europe" #Or "europe" or "USA"
+continent <- "USA" #Or "europe" or "USA"
 if(continent=="europe"){
   maxLat <- 70
   minLat <- 35
