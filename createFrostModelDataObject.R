@@ -5,6 +5,10 @@ allDrivers <- c('cumP','GDD','CDD','frostStatus','daylength')
 ecoRegionDat <- read.csv('allPhenoSites_rounded_withEcoregions.csv')
 selectSites <- ecoRegionDat %>% filter(ECO_ID == 647) #Filter to baltic mixed forests
 
+calZscore <- function(dat){
+  return((dat-mean(dat,na.rm=TRUE))/sd(dat,na.rm=TRUE))
+}
+
 gatherData <- function(driverName){
   driverFiles <- paste0('Data/phenoObs_Drivers/',dir(path="Data/phenoObs_Drivers",pattern=driverName))
   
@@ -17,16 +21,22 @@ gatherData <- function(driverName){
   print(dim(selectDriverDat))
   selectDriverDat <- selectDriverDat[,-c('lat','lon','year')]
   springDat <- selectDriverDat[,1:182]
-  springDat <- calZscore(unlist(c(springDat)))
-
+  if(driverName !="frostStatus"){
+    springDat <- calZscore(unlist(c(springDat)))
+  }else{
+    springDat <- unlist(c(springDat))
+  }
+  
   fallDat <- selectDriverDat[,183:365]
-  fallDat <- calZscore(unlist(c(fallDat)))
+  if(driverName !="frostStatus"){
+    fallDat <- calZscore(unlist(c(fallDat)))
+  }else{
+    fallDat <- unlist(c(fallDat))
+  }
   selectDriverDat <- list(fallDat=fallDat,springDat=springDat)
   return(selectDriverDat)
 }
-calZscore <- function(dat){
-  return((dat-mean(dat,na.rm=TRUE))/sd(dat,na.rm=TRUE))
-}
+
 
 allcumP <- gatherData(driverName="cumP")
 allGDD <- gatherData(driverName="GDD")
