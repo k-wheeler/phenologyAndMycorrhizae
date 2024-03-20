@@ -5,13 +5,13 @@ library('tidyverse')
 source('runMCMC_Model.R')
 
 load('frostModelDataObject_spring.RData') #Loaded as springData
-N <- 10000
-samples <- sample.int(length(springData$D),size=N,replace = FALSE)
-
-for(i in seq(1,length(springData))){
-  springData[[i]] <- springData[[i]][samples]
-}
-springData$N <- N
+# N <- 10000
+# samples <- sample.int(length(springData$D),size=N,replace = FALSE)
+# 
+# for(i in seq(1,length(springData))){
+#   springData[[i]] <- springData[[i]][samples]
+# }
+springData$N <- length(springData$D)
 
 
 # Cumulative precipitation
@@ -49,6 +49,6 @@ variableNames <- c('b0','b_GDD','b_D','b_P')
 #test=coda.samples(j.model,variable.names = variableNames,n.iter=5000)
 
 jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 10000,iterSize = 5000)
-save(jags.out,file="springFrostPredictionVarburn.RData")
+save(jags.out,file="springFrostPredictionVarburn_full.RData")
 
 #jags.mat <- data.frame(as.matrix(jags.out))
