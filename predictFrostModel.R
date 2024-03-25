@@ -4,15 +4,11 @@ library('runjags')
 library('tidyverse')
 source('runMCMC_Model.R')
 
-load('frostModelDataObject_spring.RData') #Loaded as springData
-# N <- 10000
-# samples <- sample.int(length(springData$D),size=N,replace = FALSE)
-# 
-# for(i in seq(1,length(springData))){
-#   springData[[i]] <- springData[[i]][samples]
-# }
-springData$N <- length(springData$D)
+season <- "spring"
+load(paste0('frostModelDataObject_',season,'.RData')) #Loaded as seasonData
 
+seasonData$N <- nrow(seasonData$D)
+seasonData$regionN <- ncol(seasonData$D)
 
 # Cumulative precipitation
 #CDD base 20 over a moving window 14 days prior
@@ -29,26 +25,41 @@ springData$N <- length(springData$D)
 frostModel <- "
 model{
   # Likelihood
-  for(i in 1:N) {
-    logit(p[i]) <- b0 + b_GDD * GDD[i] + b_D * D[i] + b_P * P[i]
-    y[i] ~ dbern(p[i])
+  for(j in 1:regionN){
+    #Region Random Effects
+    b_0[j] ~ dnorm(b_0_mean,b_0_prec)
+    b_GDD[j] ~ dnorm(b_GDD_mean,b_GDD_prec)
+    b_D[j] ~ dnorm(b_D_mean,b_D_prec)
+    b_P[j] ~ dnorm(b_P_mean,b_P_prec)
+    
+    for(i in 1:N) {
+      logit(p[i,j]) <- b_0[j] + b_GDD[j] * GDD[i,j] + b_D[j] * D[i,j] + b_P[j] * P[i,j]
+      y[i,j] ~ dbern(p[i,j])
+    }
   }
   # Priors
   p0 ~ dbeta(1, 1)
-  b0 <- logit(p0)
-  b_GDD ~ dunif(-5, 5)
-  b_D ~ dunif(-5, 5)
-  b_P ~ dunif(-5, 5)
+  b_0_mean <- logit(p0)
+  b_GDD_mean ~ dunif(-5, 5)
+  b_D_mean ~ dunif(-5, 5)
+  b_P_mean ~ dunif(-5, 5)
+  
+  #Precisions on Random Effects
+  b_0_prec ~ dunif(0.00000001,0.1)
+  b_GDD_prec ~ dunif(0.00000001,0.1)
+  b_D_prec ~ dunif(0.00000001,0.1)
+  b_P_prec ~ dunif(0.00000001,0.1)
 }
 "
 
 j.model <- jags.model(file=textConnection(frostModel),
-                      data=springData,
+                      data=seasonData,
                       n.chains=3)
-variableNames <- c('b0','b_GDD','b_D','b_P')
-#test=coda.samples(j.model,variable.names = variableNames,n.iter=5000)
+variableNames <- c('b_0','b_GDD','b_D','b_P','b_0_mean','b_GDD_mean','b_D_mean','b_P_mean','b_0_prec','b_GDD_prec','b_D_prec','b_P_prec')
+#variableNames <- c('b_0_mean','b_GDD_mean','b_D_mean','b_P_mean')#,'b_0_prec','b_GDD_prec','b_D_prec','b_P_prec')
+#test=coda.samples(j.model,variable.names = variableNames,n.iter=500)
 
-jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 10000,iterSize = 5000)
-save(jags.out,file="springFrostPredictionVarburn_full.RData")
+jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 10000,iterSize = 2000)
+save(jags.out,file="springFrostPredictionVarburn_hierarchical.RData")
 
 #jags.mat <- data.frame(as.matrix(jags.out))

@@ -3,7 +3,19 @@ library(tidyverse)
 library(data.table)
 allDrivers <- c('cumP','GDD','CDD','frostStatus','daylength')
 ecoRegionDat <- read.csv('allPhenoSites_rounded_withEcoregions.csv')
-selectSites <- ecoRegionDat %>% filter(ECO_ID == 647) #Filter to baltic mixed forests
+ecoregionIDs <- read.table('ecoregionIDs.txt',sep=";",header=TRUE)
+ecoregionIDs$ECO_ID <- as.numeric(ecoregionIDs$ECO_ID)
+
+ecoRegionDat <- left_join(ecoRegionDat,ecoregionIDs,by="ECO_ID")
+ecoregionGroups <- ecoRegionDat %>% group_by(ECO_ID,ECO_NAME,BIOME_NUM,BIOME_NAME) %>% summarize(n=n())
+#plot(hist(ecoregionGroups$n))
+#sum(ecoregionGroups$n>25) #17 ecoregions. 
+ecoregionGroups <- ecoregionGroups %>% filter(n>24) #16 (12 for one biome)
+selectEcoIDs <- na.omit(ecoregionGroups$ECO_ID)
+
+ecoRegionDat <- ecoRegionDat %>% mutate(lat_lon=paste(latitude,longitude,sep="_"))
+
+selectSites <- ecoRegionDat %>% filter(ECO_ID %in% selectEcoIDs) %>% dplyr::select(lat_lon, ECO_ID) %>% unique()
 
 calZscore <- function(dat){
   return((dat-mean(dat,na.rm=TRUE))/sd(dat,na.rm=TRUE))
@@ -16,27 +28,45 @@ gatherData <- function(driverName){
     return(read.csv(driverFiles[X]))
   })
   allDriverDat <- rbindlist(allDriverDat)
+  allDriverDat <- allDriverDat %>% mutate(lat_lon=paste(lat,lon,sep="_"))
   
-  selectDriverDat <- allDriverDat %>% filter(lat %in% selectSites$lat & lon %in% selectSites$lon)
+  selectDriverDat <- allDriverDat %>% filter(lat_lon %in% selectSites$lat_lon)
+  selectDriverDat <- left_join(selectDriverDat,selectSites,by="lat_lon")
   print(dim(selectDriverDat))
-  selectDriverDat <- selectDriverDat[,-c('lat','lon','year')]
-  springDat <- selectDriverDat[,1:182]
-  if(driverName !="frostStatus"){
-    springDat <- calZscore(unlist(c(springDat)))
-  }else{
-    springDat <- unlist(c(springDat))
-  }
+  names(selectDriverDat)[4:368] <- seq(1,365)
+  selectDriverDat=pivot_longer(selectDriverDat,cols = seq(4,368),names_to="DOY",values_to = "driverValue")
+  selectDriverDat$DOY <- as.numeric(selectDriverDat$DOY)
   
-  fallDat <- selectDriverDat[,183:365]
   if(driverName !="frostStatus"){
-    fallDat <- calZscore(unlist(c(fallDat)))
-  }else{
-    fallDat <- unlist(c(fallDat))
+    selectDriverDat$driverValue <- calZscore(selectDriverDat$driverValue)
   }
-  selectDriverDat <- list(fallDat=fallDat,springDat=springDat)
   return(selectDriverDat)
+  # selectDriverDat <- list(springDat=processSeasonDat(selectDriverDat = selectDriverDat,season = "spring"),
+  #                         fallDat=processSeasonDat(selectDriverDat = selectDriverDat,season = "fall"))
+  # return(selectDriverDat)
 }
 
+processSeasonDat <- function(selectDriverDat,season){
+  if(season=="spring"){
+    seasonDat <- selectDriverDat %>% filter(DOY %in% seq(1,182))
+    set.seed(1)
+  }else if(season=="fall"){
+    seasonDat <- selectDriverDat %>% filter(DOY %in% seq(183,365))
+    set.seed(2)
+  }else{
+    print("Need season value of 'spring' or 'fall'")
+    return()
+  }
+  
+  seasonDat <- seasonDat %>% group_by(ECO_ID) %>% 
+    slice_sample(n=1500) %>% 
+    mutate(rowID=row_number()) %>% 
+    dplyr::select(rowID,ECO_ID,driverValue) %>%
+    pivot_wider(values_from = driverValue,names_from = ECO_ID) %>%
+    dplyr::select(-rowID)
+  
+  return(seasonDat)
+}
 
 allcumP <- gatherData(driverName="cumP")
 allGDD <- gatherData(driverName="GDD")
@@ -44,60 +74,30 @@ allCDD <- gatherData(driverName="CDD")
 allfrostStatus <- gatherData(driverName="frostStatus")
 alldaylength <- gatherData(driverName="daylength")
 
-#Combine Spring Data
-seasonData <- list()
-seasonData$P <- allcumP$springDat
-seasonData$CDD <- allCDD$springDat
-seasonData$GDD <- allGDD$springDat
-seasonData$y <- allfrostStatus$springDat
-seasonData$D <- alldaylength$springDat
-includeDays <- !is.na(seasonData$P) & !is.na(seasonData$CDD) & !is.na(seasonData$GDD) &
-  !is.na(seasonData$y) & !is.na(seasonData$D)
+#Remove rows with NAs
+includeDays <- !is.na(allcumP$driverValue) & !is.na(allGDD$driverValue) & !is.na(allCDD$driverValue) &
+  !is.na(allfrostStatus$driverValue) & !is.na(alldaylength$driverValue)
 
-seasonData$P <- seasonData$P[includeDays]
-seasonData$CDD <- seasonData$CDD[includeDays]
-seasonData$GDD <- seasonData$GDD[includeDays]
-seasonData$y <- seasonData$y[includeDays]
-seasonData$D <- seasonData$D[includeDays]
-springData <- seasonData
-save(springData,file='frostModelDataObject_spring.RData')
+allcumP <- allcumP[includeDays,]
+allGDD <- allGDD[includeDays,]
+allCDD <- allCDD[includeDays,]
+allfrostStatus <- allfrostStatus[includeDays,]
+alldaylength <- alldaylength[includeDays,]
 
-#Combine Fall Data
-seasonData <- list()
-seasonData$P <- allcumP$fallDat
-seasonData$CDD <- allCDD$fallDat
-seasonData$GDD <- allGDD$fallDat
-seasonData$y <- allfrostStatus$fallDat
-seasonData$D <- alldaylength$fallDat
+#Group By ECO_ID, sample 1500 rows for each ECO_ID, and format so each driver is a matrix with values in rows and each column a different ECO_ID
 
-includeDays <- !is.na(seasonData$P) & !is.na(seasonData$CDD) & !is.na(seasonData$GDD) &
-  !is.na(seasonData$y) & !is.na(seasonData$D)
-
-seasonData$P <- seasonData$P[includeDays]
-seasonData$CDD <- seasonData$CDD[includeDays]
-seasonData$GDD <- seasonData$GDD[includeDays]
-seasonData$y <- seasonData$y[includeDays]
-seasonData$D <- seasonData$D[includeDays]
-
-fallData <- seasonData
-save(fallData,file='frostModelDataObject_fall.RData')
+for(season in c('spring','fall')){
+  seasonData <- list()
+  seasonData$P <- processSeasonDat(allcumP,season = season)
+  seasonData$GDD <- processSeasonDat(allGDD,season = season)
+  seasonData$CDD <- processSeasonDat(allCDD,season = season)
+  seasonData$D <- processSeasonDat(alldaylength,season = season)
+  seasonData$y <- processSeasonDat(allfrostStatus,season = season)
+  save(seasonData,file=paste0('frostModelDataObject_',season,'.RData'))
+}
 
 
-
-
-
-
-
-
-
-
-ecoregionsSub <- ecoregions %>% dplyr::select(ECO_NAME,BIOME_NUM,BIOME_NAME,ECO_ID)
-ecoRegionDat <- left_join(ecoRegionDat,ecoregionsSub,by="ECO_ID")
-ecoregionGroups <- ecoRegionDat %>% group_by(ECO_ID,ECO_NAME,BIOME_NUM,BIOME_NAME) %>% summarize(n=n())
-plot(hist(ecoregionGroups$n))
-sum(ecoregionGroups$n>25) #17 ecoregions. 
-ecoregionGroups <- ecoregionGroups %>% filter(n>24) #16 (12 for one biome)
-test <- ecoRegionDat %>% filter(ECO_ID %in% ecoregionGroups$ECO_ID)
+#test <- ecoRegionDat %>% filter(ECO_ID %in% ecoregionGroups$ECO_ID)
 #664 European Atlantic mixed forests
 #647 Baltic mixed forests
 
