@@ -59,7 +59,7 @@ variableNames <- c('b_0','b_GDD','b_D','b_P','b_0_mean','b_GDD_mean','b_D_mean',
 #variableNames <- c('b_0_mean','b_GDD_mean','b_D_mean','b_P_mean')#,'b_0_prec','b_GDD_prec','b_D_prec','b_P_prec')
 #test=coda.samples(j.model,variable.names = variableNames,n.iter=500)
 
-jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 10000,iterSize = 2000)
+jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 30000,iterSize = 5000)
 save(jags.out,file="springFrostPredictionVarburn_hierarchical.RData")
 
 #jags.mat <- data.frame(as.matrix(jags.out))
