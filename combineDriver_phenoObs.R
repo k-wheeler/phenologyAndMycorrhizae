@@ -213,7 +213,7 @@ for(f in my_fnames){
       suntimes <- getSunlightTimes(date=dates,
                                    lat=lat,lon=lon,keep=c("sunrise","sunset"),
                                    tz = "GMT") #GMT because I only care about difference
-      daylengths <- as.numeric(suntimes$sunset-suntimes$sunrise)
+      daylengths <- as.numeric(difftime(suntimes$sunset,suntimes$sunrise,units="hours"))
       return(daylengths[1:365])
       
     })
