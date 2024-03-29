@@ -14,9 +14,9 @@ ecoIDs <- left_join(ecoIDs,ecoregionIDs,by='ECO_ID')
 ecoIDs <- ecoIDs %>% dplyr::select(ECO_ID,ECO_NAME)
 ecoIDs$region <- as.character(row_number(ecoIDs$ECO_ID))
 if(season=="spring"){
-  seasonData$DD <- GDD
+  seasonData$DD <- seasonData$GDD
 }else if(season=="fall"){
-  seasonData$DD <- CDD
+  seasonData$DD <- seasonData$CDD
 }
 
 # Cumulative precipitation
