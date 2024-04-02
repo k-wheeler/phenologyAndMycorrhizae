@@ -4,7 +4,7 @@ library('runjags')
 library('tidyverse')
 source('runMCMC_Model.R')
 
-season <- "spring"
+season <- "fall"
 load(paste0('frostModelDataObject_',season,'.RData')) #Loaded as seasonData
 ecoregionIDs <- read.table('ecoregionIDs.txt',sep=";",header=TRUE)
 seasonData$N <- nrow(seasonData$D)
@@ -68,7 +68,7 @@ variableNames <- c('b_0','b_DD','b_D','b_P','b_0_mean','b_DD_mean','b_D_mean','b
 #variableNames <- c('b_0_mean','b_GDD_mean','b_D_mean','b_P_mean')#,'b_0_prec','b_GDD_prec','b_D_prec','b_P_prec')
 #test=coda.samples(j.model,variable.names = variableNames,n.iter=500)
 
-jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 60000,iterSize = 10000)
+jags.out <- runMCMC_Model(j.model,variableNames = variableNames,baseNum = 100000,iterSize = 10000,sampleCutoff=3000)
 
 out.mat <- as.matrix(jags.out)
 thinAmount <- round(nrow(out.mat)/5000,digits=0)
